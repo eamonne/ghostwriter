@@ -1,9 +1,9 @@
 use super::LLMEngine;
 use crate::util::{option_or_env, option_or_env_fallback, OptionMap};
 use anyhow::Result;
+use log::{debug, info};
 use serde_json::json;
 use serde_json::Value as json;
-use log::{debug, info};
 
 use ureq::Error;
 
@@ -98,9 +98,15 @@ impl LLMEngine for Google {
 
         // print body for debugging
         debug!("Request: {}", body);
-        let raw_response = ureq::post(format!("{}/v1beta/models/{}:generateContent?key={}", self.base_url, self.model, self.api_key).as_str())
-            .set("Content-Type", "application/json")
-            .send_json(&body);
+        let raw_response = ureq::post(
+            format!(
+                "{}/v1beta/models/{}:generateContent?key={}",
+                self.base_url, self.model, self.api_key
+            )
+            .as_str(),
+        )
+        .set("Content-Type", "application/json")
+        .send_json(&body);
 
         let response = match raw_response {
             Ok(response) => response,

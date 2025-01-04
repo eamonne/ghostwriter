@@ -1,12 +1,12 @@
 use anyhow::Result;
 use image::GrayImage;
+use log::info;
 use resvg::render;
 use resvg::tiny_skia::Pixmap;
 use resvg::usvg;
 use resvg::usvg::{fontdb, Options, Tree};
 use std::collections::HashMap;
 use std::sync::Arc;
-use log::{info};
 
 pub type OptionMap = HashMap<String, String>;
 

@@ -13,7 +13,7 @@ use rust_embed::Embed;
 
 use ghostwriter::{
     keyboard::Keyboard,
-    llm_engine::{anthropic::Anthropic, openai::OpenAI, google::Google, LLMEngine},
+    llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
     pen::Pen,
     screenshot::Screenshot,
     segmenter::analyze_image,
@@ -114,20 +114,25 @@ struct Args {
 fn main() -> Result<()> {
     dotenv().ok();
     let args = Args::parse();
-    
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(args.log_level.as_str()))
-            .init();
 
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or(args.log_level.as_str()),
+    )
+    .init();
 
     ghostwriter(&args)
 }
 
 macro_rules! shared {
-   ($x:expr) => { Arc::new(Mutex::new($x)) }
+    ($x:expr) => {
+        Arc::new(Mutex::new($x))
+    };
 }
 
 macro_rules! lock {
-   ($x:expr) => { $x.lock().unwrap() }
+    ($x:expr) => {
+        $x.lock().unwrap()
+    };
 }
 
 fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
@@ -173,10 +178,7 @@ fn load_config(filename: &str) -> String {
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let keyboard = shared!(Keyboard::new(
-        args.no_draw,
-        args.no_draw_progress,
-    ));
+    let keyboard = shared!(Keyboard::new(args.no_draw, args.no_draw_progress,));
     let pen = shared!(Pen::new(args.no_draw));
     let touch = shared!(Touch::new(args.no_draw));
 

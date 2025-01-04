@@ -1,6 +1,6 @@
 pub mod anthropic;
-pub mod openai;
 pub mod google;
+pub mod openai;
 
 use anyhow::Result;
 use serde_json::Value as json;

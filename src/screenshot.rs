@@ -1,10 +1,10 @@
 use anyhow::Result;
 use image::GrayImage;
+use log::debug;
 use std::fs::File;
 use std::io::Write;
 use std::io::{Read, Seek};
 use std::process;
-use log::{debug};
 
 use base64::{engine::general_purpose, Engine as _};
 use image::ImageEncoder;

@@ -1,8 +1,8 @@
 use image::{GrayImage, Rgb, RgbImage};
 use imageproc::contours::find_contours;
 use imageproc::geometry::{contour_area, min_area_rect};
+use log::{debug, trace};
 use serde::Serialize;
-use log::{trace, debug};
 
 #[derive(Debug, Serialize)]
 pub struct Region {
