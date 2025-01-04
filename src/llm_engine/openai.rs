@@ -3,6 +3,7 @@ use crate::util::{option_or_env, option_or_env_fallback, OptionMap};
 use anyhow::Result;
 use serde_json::json;
 use serde_json::Value as json;
+use log::{debug, info};
 
 use ureq::Error;
 
@@ -98,7 +99,7 @@ impl LLMEngine for OpenAI {
         });
 
         // print body for debugging
-        // println!("Request: {}", body);
+        debug!("Request: {}", body);
         let raw_response = ureq::post(format!("{}/v1/chat/completions", self.base_url).as_str())
             .set("Authorization", &format!("Bearer {}", self.api_key))
             .set("Content-Type", "application/json")
@@ -107,16 +108,16 @@ impl LLMEngine for OpenAI {
         let response = match raw_response {
             Ok(response) => response,
             Err(Error::Status(code, response)) => {
-                println!("Error: {}", code);
+                info!("Error: {}", code);
                 let json: json = response.into_json()?;
-                println!("Response: {}", json);
+                debug!("Response: {}", json);
                 return Err(anyhow::anyhow!("API ERROR"));
             }
             Err(_) => return Err(anyhow::anyhow!("OTHER API ERROR")),
         };
 
         let json: json = response.into_json().unwrap();
-        // println!("Response: {}", json);
+        debug!("Response: {}", json);
 
         let tool_calls = &json["choices"][0]["message"]["tool_calls"];
 

@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::io::{Read, Seek};
 use std::process;
+use log::{debug};
 
 use base64::{engine::general_purpose, Engine as _};
 use image::ImageEncoder;
@@ -154,7 +155,7 @@ impl Screenshot {
     pub fn save_image(&self, filename: &str) -> Result<()> {
         let mut png_file = File::create(filename)?;
         png_file.write_all(&self.data)?;
-        println!("PNG image saved to {}", filename);
+        debug!("PNG image saved to {}", filename);
         Ok(())
     }
 

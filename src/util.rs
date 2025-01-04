@@ -6,6 +6,7 @@ use resvg::usvg;
 use resvg::usvg::{fontdb, Options, Tree};
 use std::collections::HashMap;
 use std::sync::Arc;
+use log::{info};
 
 pub type OptionMap = HashMap<String, String>;
 
@@ -19,7 +20,7 @@ pub fn svg_to_bitmap(svg_data: &str, width: u32, height: u32) -> Result<Vec<Vec<
     let tree = match Tree::from_str(svg_data, &opt) {
         Ok(tree) => tree,
         Err(e) => {
-            println!("Error parsing SVG: {}. Using fallback SVG.", e);
+            info!("Error parsing SVG: {}. Using fallback SVG.", e);
             let fallback_svg = r#"<svg width='768' height='1024' xmlns='http://www.w3.org/2000/svg'><text x='100' y='900' font-family='Noto Sans' font-size='24'>ERROR!</text></svg>"#;
             Tree::from_str(fallback_svg, &opt)?
         }
@@ -53,7 +54,7 @@ pub fn write_bitmap_to_file(bitmap: &Vec<Vec<bool>>, filename: &str) -> Result<(
     }
 
     img.save(filename)?;
-    println!("Bitmap saved to {}", filename);
+    info!("Bitmap saved to {}", filename);
     Ok(())
 }
 

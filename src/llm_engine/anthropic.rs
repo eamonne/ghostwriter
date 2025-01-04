@@ -3,7 +3,7 @@ use crate::util::{option_or_env, option_or_env_fallback, OptionMap};
 use anyhow::Result;
 use serde_json::json;
 use serde_json::Value as json;
-
+use log::{debug};
 use ureq::Error;
 
 pub struct Tool {
@@ -98,8 +98,7 @@ impl LLMEngine for Anthropic {
             }
         });
 
-        // print body for debugging
-        // println!("Request: {}", body);
+        debug!("Request: {}", body);
 
         let raw_response = ureq::post(&format!("{}/v1/messages", self.base_url))
             .set("x-api-key", self.api_key.as_str())
@@ -110,16 +109,16 @@ impl LLMEngine for Anthropic {
         let response = match raw_response {
             Ok(response) => response,
             Err(Error::Status(code, response)) => {
-                println!("Error: {}", code);
+                debug!("Error: {}", code);
                 let json: json = response.into_json()?;
-                println!("Response: {}", json);
+                debug!("Response: {}", json);
                 return Err(anyhow::anyhow!("API ERROR"));
             }
             Err(_) => return Err(anyhow::anyhow!("OTHER API ERROR")),
         };
 
         let json: json = response.into_json().unwrap();
-        // println!("Response: {}", json);
+        debug!("Response: {}", json);
         let tool_calls = &json["content"];
         if let Some(tool_call) = tool_calls.get(0) {
             let function_name = tool_call["name"].as_str().unwrap();

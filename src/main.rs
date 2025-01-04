@@ -21,6 +21,9 @@ use ghostwriter::{
     util::{svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
 
+use env_logger;
+use log::{debug, info};
+
 const REMARKABLE_WIDTH: u32 = 768;
 const REMARKABLE_HEIGHT: u32 = 1024;
 
@@ -102,11 +105,19 @@ struct Args {
     /// Apply segmentation
     #[arg(long)]
     apply_segmentation: bool,
+
+    /// Set the log level. Default is info. Try 'debug'
+    #[arg(long, default_value = "info")]
+    log_level: String,
 }
 
 fn main() -> Result<()> {
     dotenv().ok();
     let args = Args::parse();
+    
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(args.log_level.as_str()))
+            .init();
+
 
     ghostwriter(&args)
 }
@@ -120,6 +131,7 @@ macro_rules! lock {
 }
 
 fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
+    info!("Drawing text to the screen.");
     keyboard.progress()?;
     keyboard.progress_end()?;
     keyboard.key_cmd_body()?;
@@ -135,6 +147,7 @@ fn draw_svg(
     save_bitmap: Option<&String>,
     no_draw: bool,
 ) -> Result<()> {
+    info!("Drawing SVG to the screen.");
     keyboard.progress()?;
     let bitmap = svg_to_bitmap(svg_data, REMARKABLE_WIDTH, REMARKABLE_HEIGHT)?;
     if let Some(save_bitmap) = save_bitmap {
@@ -148,7 +161,7 @@ fn draw_svg(
 }
 
 fn load_config(filename: &str) -> String {
-    // println!("Loading config from {}", filename);
+    debug!("Loading config from {}", filename);
 
     if std::path::Path::new(filename).exists() {
         std::fs::read_to_string(filename).unwrap()
@@ -260,14 +273,15 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     loop {
         if args.no_trigger {
-            println!("Skipping waiting for trigger");
+            debug!("Skipping waiting for trigger");
         } else {
-            println!("Waiting for trigger (hand-touch in the upper-right corner)...");
+            info!("Waiting for trigger (hand-touch in the upper-right corner)...");
             lock!(touch).wait_for_trigger()?;
         }
 
         lock!(keyboard).progress()?;
 
+        info!("Getting screenshot (or loading input image)");
         let base64_image = if let Some(input_png) = &args.input_png {
             BASE64_STANDARD.encode(std::fs::read(input_png)?)
         } else {
@@ -280,12 +294,18 @@ fn ghostwriter(args: &Args) -> Result<()> {
         lock!(keyboard).progress()?;
 
         if args.no_submit {
-            println!("Image not submitted to OpenAI due to --no-submit flag");
+            debug!("Image not submitted to OpenAI due to --no-submit flag");
             lock!(keyboard).progress_end()?;
             return Ok(());
         }
 
+        let prompt_general_raw = load_config(&args.prompt);
+        let prompt_general_json =
+            serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
+        let prompt = prompt_general_json["prompt"].as_str().unwrap();
+
         let segmentation_description = if args.apply_segmentation {
+            info!("Building image segmentation");
             let input_filename = args
                 .input_png
                 .clone()
@@ -297,12 +317,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         } else {
             String::new()
         };
-        // println!("Segmentation description: {}", segmentation_description);
-
-        let prompt_general_raw = load_config(&args.prompt);
-        let prompt_general_json =
-            serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
-        let prompt = prompt_general_json["prompt"].as_str().unwrap();
+        debug!("Segmentation description: {}", segmentation_description);
 
         engine.clear_content();
         engine.add_text_content(prompt);
@@ -315,6 +330,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
         engine.add_image_content(&base64_image);
 
+        info!("Executing the engine (call out to {}", engine_name);
         engine.execute()?;
 
         if args.no_loop {

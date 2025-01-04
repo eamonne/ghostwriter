@@ -3,6 +3,7 @@ use crate::util::{option_or_env, option_or_env_fallback, OptionMap};
 use anyhow::Result;
 use serde_json::json;
 use serde_json::Value as json;
+use log::{debug, info};
 
 use ureq::Error;
 
@@ -96,7 +97,7 @@ impl LLMEngine for Google {
         });
 
         // print body for debugging
-        // println!("Request: {}", body);
+        debug!("Request: {}", body);
         let raw_response = ureq::post(format!("{}/v1beta/models/{}:generateContent?key={}", self.base_url, self.model, self.api_key).as_str())
             .set("Content-Type", "application/json")
             .send_json(&body);
@@ -104,16 +105,16 @@ impl LLMEngine for Google {
         let response = match raw_response {
             Ok(response) => response,
             Err(Error::Status(code, response)) => {
-                println!("Error: {}", code);
+                info!("Error: {}", code);
                 let json: json = response.into_json()?;
-                println!("Response: {}", json);
+                debug!("Response: {}", json);
                 return Err(anyhow::anyhow!("API ERROR"));
             }
             Err(_) => return Err(anyhow::anyhow!("OTHER API ERROR")),
         };
 
         let json: json = response.into_json().unwrap();
-        // println!("Response: {}", json);
+        debug!("Response: {}", json);
 
         let tool_calls = &json["candidates"][0]["content"]["parts"];
 

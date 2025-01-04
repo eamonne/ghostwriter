@@ -29,7 +29,7 @@ impl Pen {
     }
 
     pub fn draw_line(&mut self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> Result<()> {
-        // println!("Drawing from ({}, {}) to ({}, {})", x1, y1, x2, y2);
+        // trace!("Drawing from ({}, {}) to ({}, {})", x1, y1, x2, y2);
 
         // We know this is a straight line
         // So figure out the length
@@ -43,7 +43,7 @@ impl Pen {
         let steps = (length / 5.0).ceil() as i32;
         let dx = (x2 - x1) / steps;
         let dy = (y2 - y1) / steps;
-        // println!(
+        // trace!(
         //     "Drawing from ({}, {}) to ({}, {}) in {} steps",
         //     x1, y1, x2, y2, steps
         // );
@@ -56,7 +56,7 @@ impl Pen {
             let x = x1 + dx * i;
             let y = y1 + dy * i;
             self.goto_xy((x, y))?;
-            // println!("Drawing to point at ({}, {})", x, y);
+            // trace!("Drawing to point at ({}, {})", x, y);
         }
 
         self.pen_up()?;
@@ -91,7 +91,7 @@ impl Pen {
     }
 
     // fn draw_dot(device: &mut Device, (x, y): (i32, i32)) -> Result<()> {
-    //     // println!("Drawing at ({}, {})", x, y);
+    //     // trace!("Drawing at ({}, {})", x, y);
     //     goto_xy(device, (x, y))?;
     //     pen_down(device)?;
     //

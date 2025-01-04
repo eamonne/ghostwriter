@@ -1,5 +1,6 @@
 use anyhow::Result;
 use evdev::{Device, EventType, InputEvent};
+use log::{trace, debug, info};
 
 use std::thread::sleep;
 use std::time::Duration;
@@ -49,9 +50,9 @@ impl Touch {
                 }
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
-                        println!("Touch release detected at ({}, {})", position_x, position_y);
+                        debug!("Touch release detected at ({}, {})", position_x, position_y);
                         if position_x > 1360 && position_y > 1810 {
-                            println!("Touch release in target zone!");
+                            debug!("Touch release in target zone!");
                             return Ok(());
                         }
                     }
@@ -63,7 +64,8 @@ impl Touch {
     pub fn touch_start(&mut self, xy: (i32, i32)) -> Result<()> {
         let (x, y) = screen_to_input(xy);
         if let Some(device) = &mut self.device {
-            println!("touch_start at ({}, {})", x, y);
+            trace!("touch_start at ({}, {})", x, y);
+            sleep(Duration::from_millis(100));
             device.send_events(&[
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
