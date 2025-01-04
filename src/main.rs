@@ -106,7 +106,7 @@ struct Args {
     #[arg(long)]
     apply_segmentation: bool,
 
-    /// Set the log level. Default is info. Try 'debug'
+    /// Set the log level. Try 'debug' or 'trace'
     #[arg(long, default_value = "info")]
     log_level: String,
 }
