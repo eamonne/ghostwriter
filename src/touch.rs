@@ -84,7 +84,7 @@ impl Touch {
 
     pub fn touch_stop(&mut self) -> Result<()> {
         if let Some(device) = &mut self.device {
-            println!("touch_stop");
+            trace!("touch_stop");
             device.send_events(&[
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, -1),
