@@ -51,7 +51,7 @@ impl Touch {
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
                         debug!("Touch release detected at ({}, {})", position_x, position_y);
-                        if position_x > 1360 && position_y > 1810 {
+                        if position_x > 1345 && position_y > 1815 {
                             debug!("Touch release in target zone!");
                             return Ok(());
                         }
