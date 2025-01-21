@@ -1,15 +1,12 @@
 use anyhow::Result;
-use std::sync::{Arc, Mutex};
-
-use serde_json::Value as json;
-
-use clap::Parser;
-
 use base64::prelude::*;
-
+use clap::Parser;
 use dotenv::dotenv;
-
+use env_logger;
+use log::{debug, info};
 use rust_embed::Embed;
+use serde_json::Value as json;
+use std::sync::{Arc, Mutex};
 
 use ghostwriter::{
     keyboard::Keyboard,
@@ -20,9 +17,6 @@ use ghostwriter::{
     touch::Touch,
     util::{svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
-
-use env_logger;
-use log::{debug, info};
 
 const REMARKABLE_WIDTH: u32 = 768;
 const REMARKABLE_HEIGHT: u32 = 1024;
