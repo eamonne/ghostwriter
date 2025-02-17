@@ -4,6 +4,16 @@ name: Remarkable Build
 
 jobs:
   remarkable_build:
+    strategy:
+      matrix:
+        target:
+          - armv7-unknown-linux-gnueabihf
+          - aarch64-unknown-linux-gnu
+        include:
+          - target: armv7-unknown-linux-gnueabihf
+            name: ghostwriter
+          - target: aarch64-unknown-linux-gnu
+            name: ghostwriter-rmpp-broken
     name: Remarkable Build
     runs-on: ubuntu-latest
     steps:
@@ -11,16 +21,18 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: armv7-unknown-linux-gnueabihf
+          target: ${{ matrix.target }}
           override: true
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
           command: build
-          args: --target armv7-unknown-linux-gnueabihf --release
+          args: --release --target ${{ matrix.target }}
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: ${{ matrix.name }}
           files: |
-            target/armv7-unknown-linux-gnueabihf/release/ghostwriter
+            target/${{ matrix.target }}/release/ghostwriter
+
