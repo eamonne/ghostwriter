@@ -225,6 +225,8 @@ impl Keyboard {
     pub fn key_down(&mut self, key: Key) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.emit(&[(InputEvent::new(EventType::KEY, key.code(), 1))])?;
+            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            thread::sleep(time::Duration::from_millis(1));
         }
         Ok(())
     }
@@ -232,12 +234,19 @@ impl Keyboard {
     pub fn key_up(&mut self, key: Key) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.emit(&[(InputEvent::new(EventType::KEY, key.code(), 0))])?;
+            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            thread::sleep(time::Duration::from_millis(1));
         }
         Ok(())
     }
 
     pub fn string_to_keypresses(&mut self, input: &str) -> Result<(), evdev::Error> {
         if let Some(device) = &mut self.device {
+
+            // make sure we are synced before we start; this might be paranoia
+            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            thread::sleep(time::Duration::from_millis(10));
+
             for c in input.chars() {
                 if let Some(&(key, shift)) = self.key_map.get(&c) {
                     if shift {
@@ -306,12 +315,12 @@ impl Keyboard {
         Ok(())
     }
 
-    pub fn progress(&mut self) -> Result<()> {
+    pub fn progress(&mut self, note: &str) -> Result<()> {
         if self.no_draw_progress {
             return Ok(());
         }
-        self.string_to_keypresses(".")?;
-        self.progress_count += 1;
+        self.string_to_keypresses(note)?;
+        self.progress_count += note.len() as u32;
         Ok(())
     }
 

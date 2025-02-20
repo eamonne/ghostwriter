@@ -8,6 +8,9 @@ use rust_embed::Embed;
 use serde_json::Value as json;
 use std::sync::{Arc, Mutex};
 
+use std::thread::sleep;
+use std::time::Duration;
+
 use ghostwriter::{
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
@@ -131,11 +134,11 @@ macro_rules! lock {
 
 fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
     info!("Drawing text to the screen.");
-    keyboard.progress()?;
+    // keyboard.progress(".")?;
     keyboard.progress_end()?;
     keyboard.key_cmd_body()?;
     keyboard.string_to_keypresses(text)?;
-    keyboard.string_to_keypresses("\n\n")?;
+    // keyboard.string_to_keypresses("\n\n")?;
     Ok(())
 }
 
@@ -147,7 +150,7 @@ fn draw_svg(
     no_draw: bool,
 ) -> Result<()> {
     info!("Drawing SVG to the screen.");
-    keyboard.progress()?;
+    keyboard.progress_end()?;
     let bitmap = svg_to_bitmap(svg_data, REMARKABLE_WIDTH, REMARKABLE_HEIGHT)?;
     if let Some(save_bitmap) = save_bitmap {
         write_bitmap_to_file(&bitmap, save_bitmap)?;
@@ -155,7 +158,6 @@ fn draw_svg(
     if !no_draw {
         pen.draw_bitmap(&bitmap)?;
     }
-    keyboard.progress_end()?;
     Ok(())
 }
 
@@ -175,6 +177,12 @@ fn ghostwriter(args: &Args) -> Result<()> {
     let keyboard = shared!(Keyboard::new(args.no_draw, args.no_draw_progress,));
     let pen = shared!(Pen::new(args.no_draw));
     let touch = shared!(Touch::new(args.no_draw));
+
+    // Give time for the virtual keyboard to be plugged in
+    sleep(Duration::from_millis(1000));
+
+    lock!(touch).tap_middle_bottom();
+    lock!(keyboard).progress("Keyboard loaded...")?;
 
     let mut engine_options = OptionMap::new();
 
@@ -228,13 +236,8 @@ fn ghostwriter(args: &Args) -> Result<()> {
                 std::fs::write(output_file, text).unwrap();
             }
             if !no_draw {
-                // Touch in the middle bottom to make sure we go below any new drawing
-                lock!(touch_clone).touch_start((384, 1000)).unwrap(); // middle bottom
-                lock!(touch_clone).touch_stop().unwrap();
-
-                let mut keyboard = lock!(keyboard_clone);
-
-                draw_text(text, &mut keyboard).unwrap();
+                // let mut keyboard = lock!(keyboard_clone);
+                draw_text(text, &mut lock!(keyboard_clone)).unwrap();
             }
         }),
     );
@@ -267,6 +270,9 @@ fn ghostwriter(args: &Args) -> Result<()> {
         }),
     );
 
+    lock!(keyboard).progress("Tools initialized.")?;
+    lock!(keyboard).progress_end()?;
+
     loop {
         if args.no_trigger {
             debug!("Skipping waiting for trigger");
@@ -275,7 +281,10 @@ fn ghostwriter(args: &Args) -> Result<()> {
             lock!(touch).wait_for_trigger()?;
         }
 
-        lock!(keyboard).progress()?;
+        sleep(Duration::from_millis(1000));
+        lock!(touch).tap_middle_bottom();
+        // sleep(Duration::from_millis(1000));
+        // lock!(keyboard).progress("Taking screenshot...")?;
 
         info!("Getting screenshot (or loading input image)");
         let base64_image = if let Some(input_png) = &args.input_png {
@@ -287,7 +296,6 @@ fn ghostwriter(args: &Args) -> Result<()> {
             }
             screenshot.base64()?
         };
-        lock!(keyboard).progress()?;
 
         if args.no_submit {
             debug!("Image not submitted to OpenAI due to --no-submit flag");
@@ -302,6 +310,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
         let segmentation_description = if args.apply_segmentation {
             info!("Building image segmentation");
+            lock!(keyboard).progress("segmenting...")?;
             let input_filename = args
                 .input_png
                 .clone()
@@ -327,6 +336,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         engine.add_image_content(&base64_image);
 
         info!("Executing the engine (call out to {}", engine_name);
+        lock!(keyboard).progress("thinking...")?;
         engine.execute()?;
 
         if args.no_loop {

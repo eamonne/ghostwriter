@@ -71,7 +71,7 @@ impl Touch {
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_X, x),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_Y, y),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_PRESSURE, 81),
+                InputEvent::new(EventType::ABSOLUTE, ABS_MT_PRESSURE, 100),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TOUCH_MAJOR, 17),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TOUCH_MINOR, 17),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_ORIENTATION, 4),
@@ -100,11 +100,21 @@ impl Touch {
         if let Some(device) = &mut self.device {
             device.send_events(&[
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
+                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_X, x),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_Y, y),
                 InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
             ])?;
         }
+        Ok(())
+    }
+
+    pub fn tap_middle_bottom(&mut self) -> Result<()> {
+        self.touch_start((384, 1000)).unwrap(); // middle bottom
+        sleep(Duration::from_millis(10));
+        self.touch_stop().unwrap();
+        sleep(Duration::from_millis(10));
+        // sleep(Duration::from_millis(100));
         Ok(())
     }
 }
