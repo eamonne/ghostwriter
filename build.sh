@@ -5,6 +5,11 @@ remarkable="${1:-remarkable}"
 
 if [ "$1" == "local" ]; then
     cargo build --release
+elif [[ "$1" == rmpp* ]]; then
+    cross build \
+      --release \
+      --target=aarch64-unknown-linux-gnu \
+      && scp target/aarch64-unknown-linux-gnu/release/ghostwriter root@$remarkable:
 else
     cross build \
       --release \
