@@ -1,5 +1,5 @@
 use anyhow::Result;
-use image::{GrayImage, RgbaImage};
+use image::GrayImage;
 use log::{debug, info};
 use std::fs::File;
 use std::io::Write;

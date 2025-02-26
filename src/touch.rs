@@ -123,6 +123,9 @@ impl Touch {
     }
 }
 
+}
+
+impl Touch {
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
         let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
