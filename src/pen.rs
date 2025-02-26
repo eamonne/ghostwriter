@@ -154,7 +154,6 @@ impl Pen {
         Ok(())
     }
 }
-}
 
 impl Pen {
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {

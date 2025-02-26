@@ -123,8 +123,6 @@ impl Touch {
     }
 }
 
-}
-
 impl Touch {
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
