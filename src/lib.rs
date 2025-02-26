@@ -1,3 +1,4 @@
+pub mod device;
 pub mod keyboard;
 pub mod llm_engine;
 pub mod pen;

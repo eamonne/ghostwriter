@@ -12,6 +12,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use ghostwriter::{
+    device::DeviceModel,
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
     pen::Pen,
@@ -21,6 +22,7 @@ use ghostwriter::{
     util::{svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
 
+// Output dimensions remain the same for both devices
 const REMARKABLE_WIDTH: u32 = 768;
 const REMARKABLE_HEIGHT: u32 = 1024;
 
@@ -120,6 +122,9 @@ fn main() -> Result<()> {
         env_logger::Env::default().default_filter_or(args.log_level.as_str()),
     )
     .init();
+    
+    let device_model = DeviceModel::detect();
+    info!("Detected device: {}", device_model.name());
 
     ghostwriter(&args)
 }

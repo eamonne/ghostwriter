@@ -2,30 +2,35 @@ use anyhow::Result;
 use evdev::{Device, EventType, InputEvent};
 use std::thread::sleep;
 use std::time::Duration;
+use log::info;
 
-const INPUT_WIDTH: usize = 15725;
-const INPUT_HEIGHT: usize = 20966;
+use crate::device::DeviceModel;
 
+// Output dimensions remain the same for both devices
 const REMARKABLE_WIDTH: u32 = 768;
 const REMARKABLE_HEIGHT: u32 = 1024;
 
 pub struct Pen {
     device: Option<Device>,
+    device_model: DeviceModel,
 }
 
 impl Pen {
     pub fn new(no_draw: bool) -> Self {
+        let device_model = DeviceModel::detect();
+        info!("Pen using device model: {}", device_model.name());
+        
         let device = if no_draw {
             None
         } else {
-            Some(Device::open("/dev/input/event1").unwrap())
+            Some(Device::open(device_model.pen_input_device()).unwrap())
         };
 
-        Self { device }
+        Self { device, device_model }
     }
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
-        self.draw_line(screen_to_input(p1), screen_to_input(p2))
+        self.draw_line(self.screen_to_input(p1), self.screen_to_input(p2))
     }
 
     pub fn draw_line(&mut self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> Result<()> {
@@ -135,7 +140,7 @@ impl Pen {
     }
 
     pub fn goto_xy_screen(&mut self, point: (i32, i32)) -> Result<()> {
-        self.goto_xy(screen_to_input(point))
+        self.goto_xy(self.screen_to_input(point))
     }
 
     pub fn goto_xy(&mut self, (x, y): (i32, i32)) -> Result<()> {
@@ -149,12 +154,23 @@ impl Pen {
         Ok(())
     }
 }
-fn screen_to_input((x, y): (i32, i32)) -> (i32, i32) {
-    // Swap and normalize the coordinates
-    let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
-    let y_normalized = y as f32 / REMARKABLE_HEIGHT as f32;
+    fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
+        // Swap and normalize the coordinates
+        let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
+        let y_normalized = y as f32 / REMARKABLE_HEIGHT as f32;
 
-    let x_input = ((1.0 - y_normalized) * INPUT_HEIGHT as f32) as i32;
-    let y_input = (x_normalized * INPUT_WIDTH as f32) as i32;
-    (x_input, y_input)
-}
+        match self.device_model {
+            DeviceModel::RemarkablePaperPro => {
+                // RMPP coordinate transformation
+                let x_input = ((1.0 - y_normalized) * self.device_model.max_y_value() as f32) as i32;
+                let y_input = (x_normalized * self.device_model.max_x_value() as f32) as i32;
+                (x_input, y_input)
+            },
+            _ => {
+                // RM2 coordinate transformation
+                let x_input = ((1.0 - y_normalized) * self.device_model.max_y_value() as f32) as i32;
+                let y_input = (x_normalized * self.device_model.max_x_value() as f32) as i32;
+                (x_input, y_input)
+            }
+        }
+    }
