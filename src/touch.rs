@@ -122,7 +122,6 @@ impl Touch {
         // sleep(Duration::from_millis(100));
         Ok(())
     }
-}
 
 impl Touch {
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
