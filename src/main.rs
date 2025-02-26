@@ -63,9 +63,13 @@ struct Args {
     #[arg(short, long)]
     no_submit: bool,
 
-    /// Skip running draw_text or draw_svg
+    /// Skip running draw_text or draw_svg, for testing
     #[arg(long)]
     no_draw: bool,
+
+    /// Disable keyboard
+    #[arg(long)]
+    no_keyboard: bool,
 
     /// Disable keyboard progress
     #[arg(long)]
@@ -174,7 +178,7 @@ fn load_config(filename: &str) -> String {
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let keyboard = shared!(Keyboard::new(args.no_draw, args.no_draw_progress,));
+    let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
     let pen = shared!(Pen::new(args.no_draw));
     let touch = shared!(Touch::new(args.no_draw));
 
