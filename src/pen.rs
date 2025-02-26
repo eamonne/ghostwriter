@@ -28,6 +28,7 @@ impl Pen {
 
         Self { device, device_model }
     }
+}
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
         self.draw_line(self.screen_to_input(p1), self.screen_to_input(p2))

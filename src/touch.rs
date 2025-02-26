@@ -40,6 +40,7 @@ impl Touch {
 
         Self { device, device_model }
     }
+}
 
     pub fn wait_for_trigger(&mut self) -> Result<()> {
         let mut position_x = 0;
