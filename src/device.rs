@@ -9,15 +9,21 @@ pub enum DeviceModel {
 
 impl DeviceModel {
     pub fn detect() -> Self {
-        // Check for Paper Pro specific files or characteristics
-        // This is a simplified detection method - you may need to adjust based on actual device differences
-        if Path::new("/sys/devices/platform/30a40000.i2c/i2c-0/0-0038/input/input2").exists() {
-            DeviceModel::RemarkablePaperPro
-        } else {
-            DeviceModel::Remarkable2
+        if Path::new("/etc/hwrevision").exists() {
+            if let Ok(hwrev) = std::fs::read_to_string("/etc/hwrevision") {
+                if hwrev.contains("ferrari 1.0") {
+                    return DeviceModel::RemarkablePaperPro;
+                }
+                if hwrev.contains("reMarkable2 1.0") {
+                    return DeviceModel::Remarkable2;
+                }
+            }
         }
+
+        // Nothing matched :shrug:
+        DeviceModel::Unknown
     }
-    
+
     pub fn name(&self) -> &str {
         match self {
             DeviceModel::Remarkable2 => "Remarkable2",
