@@ -31,31 +31,7 @@ impl DeviceModel {
             DeviceModel::Unknown => "Unknown",
         }
     }
-    
-    pub fn screen_width(&self) -> u32 {
-        match self {
-            DeviceModel::Remarkable2 => 1872,
-            DeviceModel::RemarkablePaperPro => 1624,
-            DeviceModel::Unknown => 1872, // Default to RM2
-        }
-    }
-    
-    pub fn screen_height(&self) -> u32 {
-        match self {
-            DeviceModel::Remarkable2 => 1404,
-            DeviceModel::RemarkablePaperPro => 2154,
-            DeviceModel::Unknown => 1404, // Default to RM2
-        }
-    }
-    
-    pub fn bytes_per_pixel(&self) -> usize {
-        match self {
-            DeviceModel::Remarkable2 => 2,
-            DeviceModel::RemarkablePaperPro => 4,
-            DeviceModel::Unknown => 2, // Default to RM2
-        }
-    }
-    
+
     pub fn pen_input_device(&self) -> &str {
         match self {
             DeviceModel::Remarkable2 => "/dev/input/event1",
@@ -63,7 +39,7 @@ impl DeviceModel {
             DeviceModel::Unknown => "/dev/input/event1", // Default to RM2
         }
     }
-    
+
     pub fn touch_input_device(&self) -> &str {
         match self {
             DeviceModel::Remarkable2 => "/dev/input/event2",
@@ -71,7 +47,7 @@ impl DeviceModel {
             DeviceModel::Unknown => "/dev/input/event2", // Default to RM2
         }
     }
-    
+
     pub fn max_x_value(&self) -> i32 {
         match self {
             DeviceModel::Remarkable2 => 15725,
@@ -79,7 +55,7 @@ impl DeviceModel {
             DeviceModel::Unknown => 15725, // Default to RM2
         }
     }
-    
+
     pub fn max_y_value(&self) -> i32 {
         match self {
             DeviceModel::Remarkable2 => 20966,
