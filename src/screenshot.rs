@@ -16,22 +16,21 @@ const OUTPUT_HEIGHT: u32 = 1024;
 
 pub struct Screenshot {
     data: Vec<u8>,
-    device: DeviceModel,
+    device_model: DeviceModel,
 }
 
 impl Screenshot {
     pub fn new() -> Result<Screenshot> {
-        let device = DeviceModel::detect();
-        info!("Screen detected device: {}", device.name());
-        let screenshot_data = Self::take_screenshot(&device)?;
+        let device_model = DeviceModel::detect();
+        info!("Screen detected device: {}", device_model.name());
         Ok(Screenshot {
-            data: screenshot_data,
-            device,
+            data: vec![],
+            device_model,
         })
     }
 
     fn screen_width(&self) -> u32 {
-        case self.device {
+        match self.device_model {
             DeviceModel::Remarkable2 => 1872,
             DeviceModel::RemarkablePaperPro => 1624,
             DeviceModel::Unknown => 1872, // Default to RM2
@@ -39,7 +38,7 @@ impl Screenshot {
     }
 
     fn screen_height(&self) -> u32 {
-        case self.device {
+        match self.device_model {
             DeviceModel::Remarkable2 => 1404,
             DeviceModel::RemarkablePaperPro => 2154,
             DeviceModel::Unknown => 1404, // Default to RM2
@@ -47,49 +46,52 @@ impl Screenshot {
     }
 
     pub fn bytes_per_pixel(&self) -> usize {
-        match self.device {
+        match self.device_model {
             DeviceModel::Remarkable2 => 2,
             DeviceModel::RemarkablePaperPro => 4,
             DeviceModel::Unknown => 2, // Default to RM2
         }
     }
 
-    fn take_screenshot() -> Result<Vec<u8>> {
+    pub fn take_screenshot(&mut self) -> Result<()> {
         // Find xochitl's process
         let pid = Self::find_xochitl_pid()?;
 
         // Find framebuffer location in memory
-        let skip_bytes = Self::find_framebuffer_address(&pid)?;
+        let skip_bytes = self.find_framebuffer_address(&pid)?;
 
         // Read the framebuffer data
-        let screenshot_data = Self::read_framebuffer(&pid, skip_bytes)?;
+        let screenshot_data = self.read_framebuffer(&pid, skip_bytes)?;
 
         // Process the image data (transpose, color correction, etc.)
-        let processed_data = Self::process_image(screenshot_data)?;
+        let processed_data = self.process_image(screenshot_data)?;
 
-        Ok(processed_data)
+        self.data = processed_data;
+
+        Ok(())
     }
 
     fn find_xochitl_pid() -> Result<String> {
         let output = process::Command::new("pidof").arg("xochitl").output()?;
         let pids = String::from_utf8(output.stdout)?;
         for pid in pids.split_whitespace() {
-            let has_fb = process::Command::new("grep")
-                .args(&["-C1", "/dev/fb0", &format!("/proc/{}/maps", pid)])
-                .output()?;
-            if !has_fb.stdout.is_empty() {
-                return Ok(pid.to_string());
-            }
+            return Ok(pid.to_string());
+            // let has_fb = process::Command::new("grep")
+            //     .args(&["-C1", "/dev/fb0", &format!("/proc/{}/maps", pid)])
+            //     .output()?;
+            // if !has_fb.stdout.is_empty() {
+            //     return Ok(pid.to_string());
+            // }
         }
-        anyhow::bail!("No xochitl process with /dev/fb0 found")
+        anyhow::bail!("No xochitl process found")
     }
 
-    fn find_framebuffer_address(pid: &str) -> Result<u64> {
-        match self.device {
+    fn find_framebuffer_address(&self, pid: &str) -> Result<u64> {
+        match self.device_model {
             DeviceModel::RemarkablePaperPro => {
                 // For RMPP (arm64), we need to use the approach from pointer_arm64.go
-                let start_address = Self::get_memory_range(pid)?;
-                let frame_pointer = Self::calculate_frame_pointer(pid, start_address)?;
+                let start_address = self.get_memory_range(pid)?;
+                let frame_pointer = self.calculate_frame_pointer(pid, start_address)?;
                 Ok(frame_pointer)
             },
             _ => {
@@ -109,7 +111,7 @@ impl Screenshot {
     }
 
     // Get memory range for RMPP based on goMarkableStream/pointer_arm64.go
-    fn get_memory_range(pid: &str) -> Result<u64> {
+    fn get_memory_range(&self, pid: &str) -> Result<u64> {
         let maps_file_path = format!("/proc/{}/maps", pid);
         let maps_content = std::fs::read_to_string(&maps_file_path)?;
 
@@ -137,7 +139,7 @@ impl Screenshot {
     }
 
     // Calculate frame pointer for RMPP based on goMarkableStream/pointer_arm64.go
-    fn calculate_frame_pointer(pid: &str, start_address: u64) -> Result<u64> {
+    fn calculate_frame_pointer(&self, pid: &str, start_address: u64) -> Result<u64> {
         let mem_file_path = format!("/proc/{}/mem", pid);
         let mut file = std::fs::File::open(mem_file_path)?;
 
@@ -162,7 +164,7 @@ impl Screenshot {
         Ok(start_address + offset)
     }
 
-    fn read_framebuffer(pid: &str, skip_bytes: u64) -> Result<Vec<u8>> {
+    fn read_framebuffer(&self, pid: &str, skip_bytes: u64) -> Result<Vec<u8>> {
         let window_bytes = self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
         let mut buffer = vec![0u8; window_bytes];
         let mut file = std::fs::File::open(format!("/proc/{}/mem", pid))?;
@@ -171,9 +173,9 @@ impl Screenshot {
         Ok(buffer)
     }
 
-    fn process_image(data: Vec<u8>) -> Result<Vec<u8>> {
+    fn process_image(&self, data: Vec<u8>) -> Result<Vec<u8>> {
         // Encode the raw data to PNG
-        let png_data = Self::encode_png(&data)?;
+        let png_data = self.encode_png(&data)?;
 
         // Resize the PNG to OUTPUT_WIDTH x OUTPUT_HEIGHT
         let img = image::load_from_memory(&png_data)?;
@@ -188,7 +190,7 @@ impl Screenshot {
         let encoder = image::codecs::png::PngEncoder::new(&mut resized_png_data);
 
         // Handle different color types based on device
-        match self.device {
+        match self.device_model {
             DeviceModel::RemarkablePaperPro => {
                 encoder.write_image(
                     resized_img.as_luma8().unwrap().as_raw(),
@@ -210,20 +212,20 @@ impl Screenshot {
         Ok(resized_png_data)
     }
 
-    fn encode_png(raw_data: &[u8]) -> Result<Vec<u8>> {
-        match self.device {
+    fn encode_png(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
+        match self.device_model {
             DeviceModel::RemarkablePaperPro => {
                 // RMPP uses 32-bit RGBA format
-                Self::encode_png_rmpp(raw_data)
+                self.encode_png_rmpp(raw_data)
             },
             _ => {
                 // RM2 uses 16-bit grayscale
-                Self::encode_png_rm2(raw_data)
+                self.encode_png_rm2(raw_data)
             }
         }
     }
 
-    fn encode_png_rm2(raw_data: &[u8]) -> Result<Vec<u8>> {
+    fn encode_png_rm2(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
         let raw_u8: Vec<u8> = raw_data
             .chunks_exact(2)
             .map(|chunk| u8::from_le_bytes([chunk[1]]))
@@ -256,7 +258,7 @@ impl Screenshot {
         Ok(png_data)
     }
 
-    fn encode_png_rmpp(raw_data: &[u8]) -> Result<Vec<u8>> {
+    fn encode_png_rmpp(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
         // RMPP uses 32-bit RGBA format, but we'll convert to grayscale
         let width = self.screen_width();
         let height = self.screen_height();

@@ -32,35 +32,4 @@ impl DeviceModel {
         }
     }
 
-    pub fn pen_input_device(&self) -> &str {
-        match self {
-            DeviceModel::Remarkable2 => "/dev/input/event1",
-            DeviceModel::RemarkablePaperPro => "/dev/input/event2",
-            DeviceModel::Unknown => "/dev/input/event1", // Default to RM2
-        }
-    }
-
-    pub fn touch_input_device(&self) -> &str {
-        match self {
-            DeviceModel::Remarkable2 => "/dev/input/event2",
-            DeviceModel::RemarkablePaperPro => "/dev/input/event3",
-            DeviceModel::Unknown => "/dev/input/event2", // Default to RM2
-        }
-    }
-
-    pub fn max_x_value(&self) -> i32 {
-        match self {
-            DeviceModel::Remarkable2 => 15725,
-            DeviceModel::RemarkablePaperPro => 11180,
-            DeviceModel::Unknown => 15725, // Default to RM2
-        }
-    }
-
-    pub fn max_y_value(&self) -> i32 {
-        match self {
-            DeviceModel::Remarkable2 => 20966,
-            DeviceModel::RemarkablePaperPro => 15340,
-            DeviceModel::Unknown => 20966, // Default to RM2
-        }
-    }
 }

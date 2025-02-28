@@ -31,16 +31,21 @@ impl Touch {
     pub fn new(no_touch: bool) -> Self {
         let device_model = DeviceModel::detect();
         info!("Touch using device model: {}", device_model.name());
-        
+
+        let device_path = match device_model {
+            DeviceModel::Remarkable2 => "/dev/input/event2",
+            DeviceModel::RemarkablePaperPro => "/dev/input/event3",
+            DeviceModel::Unknown => "/dev/input/event2", // Default to RM2
+        };
+
         let device = if no_touch {
             None
         } else {
-            Some(Device::open(device_model.touch_input_device()).unwrap())
+            Some(Device::open(device_path).unwrap())
         };
 
         Self { device, device_model }
     }
-}
 
     pub fn wait_for_trigger(&mut self) -> Result<()> {
         let mut position_x = 0;
@@ -123,7 +128,22 @@ impl Touch {
         Ok(())
     }
 
-impl Touch {
+    fn screen_width(&self) -> u32 {
+        match self.device_model {
+            DeviceModel::Remarkable2 => 1872,
+            DeviceModel::RemarkablePaperPro => 1624,
+            DeviceModel::Unknown => 1872, // Default to RM2
+        }
+    }
+
+    fn screen_height(&self) -> u32 {
+        match self.device_model {
+            DeviceModel::Remarkable2 => 1404,
+            DeviceModel::RemarkablePaperPro => 2154,
+            DeviceModel::Unknown => 1404, // Default to RM2
+        }
+    }
+
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
         let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
@@ -132,15 +152,16 @@ impl Touch {
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
                 // RMPP coordinate transformation
-                let x_input = (x_normalized * self.device_model.screen_width() as f32) as i32;
-                let y_input = ((1.0 - y_normalized) * self.device_model.screen_height() as f32) as i32;
+                let x_input = (x_normalized * self.screen_width() as f32) as i32;
+                let y_input = ((1.0 - y_normalized) * self.screen_height() as f32) as i32;
                 (x_input, y_input)
             },
             _ => {
                 // RM2 coordinate transformation
-                let x_input = (x_normalized * self.device_model.screen_width() as f32) as i32;
-                let y_input = ((1.0 - y_normalized) * self.device_model.screen_height() as f32) as i32;
+                let x_input = (x_normalized * self.screen_width() as f32) as i32;
+                let y_input = ((1.0 - y_normalized) * self.screen_height() as f32) as i32;
                 (x_input, y_input)
             }
         }
     }
+}

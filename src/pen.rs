@@ -19,16 +19,21 @@ impl Pen {
     pub fn new(no_draw: bool) -> Self {
         let device_model = DeviceModel::detect();
         info!("Pen using device model: {}", device_model.name());
-        
+
+        let pen_input_device = match device_model {
+            DeviceModel::Remarkable2 => "/dev/input/event1",
+            DeviceModel::RemarkablePaperPro => "/dev/input/event2",
+            DeviceModel::Unknown => "/dev/input/event1", // Default to RM2
+        };
+
         let device = if no_draw {
             None
         } else {
-            Some(Device::open(device_model.pen_input_device()).unwrap())
+            Some(Device::open(pen_input_device).unwrap())
         };
 
         Self { device, device_model }
     }
-}
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
         self.draw_line(self.screen_to_input(p1), self.screen_to_input(p2))
@@ -155,7 +160,22 @@ impl Pen {
         Ok(())
     }
 
-impl Pen {
+    pub fn max_x_value(&self) -> i32 {
+        match self.device_model {
+            DeviceModel::Remarkable2 => 15725,
+            DeviceModel::RemarkablePaperPro => 11180,
+            DeviceModel::Unknown => 15725, // Default to RM2
+        }
+    }
+
+    pub fn max_y_value(&self) -> i32 {
+        match self.device_model {
+            DeviceModel::Remarkable2 => 20966,
+            DeviceModel::RemarkablePaperPro => 15340,
+            DeviceModel::Unknown => 20966, // Default to RM2
+        }
+    }
+
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
         let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
@@ -163,16 +183,15 @@ impl Pen {
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
-                // RMPP coordinate transformation
-                let x_input = ((1.0 - y_normalized) * self.device_model.max_y_value() as f32) as i32;
-                let y_input = (x_normalized * self.device_model.max_x_value() as f32) as i32;
+                let x_input = ((1.0 - y_normalized) * self.max_y_value() as f32) as i32;
+                let y_input = (x_normalized * self.max_x_value() as f32) as i32;
                 (x_input, y_input)
             },
             _ => {
-                // RM2 coordinate transformation
-                let x_input = ((1.0 - y_normalized) * self.device_model.max_y_value() as f32) as i32;
-                let y_input = (x_normalized * self.device_model.max_x_value() as f32) as i32;
+                let x_input = ((1.0 - y_normalized) * self.max_y_value() as f32) as i32;
+                let y_input = (x_normalized * self.max_x_value() as f32) as i32;
                 (x_input, y_input)
             }
         }
     }
+}
