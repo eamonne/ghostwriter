@@ -54,7 +54,16 @@ impl Touch {
         let mut position_x = 0;
         let mut position_y = 0;
         loop {
-            for event in self.device.as_mut().unwrap().fetch_events().unwrap() {
+            // Store events in a temporary vector to avoid borrowing issues
+            let mut events_to_process = Vec::new();
+            if let Some(device) = &mut self.device {
+                for event in device.fetch_events()? {
+                    events_to_process.push(event);
+                }
+            }
+            
+            // Process the events after releasing the mutable borrow
+            for event in events_to_process {
                 if event.code() == ABS_MT_POSITION_X {
                     position_x = event.value();
                 }
