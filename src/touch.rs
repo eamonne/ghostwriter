@@ -63,8 +63,9 @@ impl Touch {
                 }
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
-                        debug!("Touch release detected at ({}, {})", position_x, position_y);
-                        if position_x > 1345 && position_y > 1815 {
+                        let (x, y) = self.screen_to_input((position_x, position_y));
+                        debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
+                        if x > 700 && y < 25 {
                             debug!("Touch release in target zone!");
                             return Ok(());
                         }
@@ -134,7 +135,7 @@ impl Touch {
     fn screen_width(&self) -> u32 {
         match self.device_model {
             DeviceModel::Remarkable2 => 1872,
-            DeviceModel::RemarkablePaperPro => 1624,
+            DeviceModel::RemarkablePaperPro => 2065,
             DeviceModel::Unknown => 1872, // Default to RM2
         }
     }
@@ -142,7 +143,7 @@ impl Touch {
     fn screen_height(&self) -> u32 {
         match self.device_model {
             DeviceModel::Remarkable2 => 1404,
-            DeviceModel::RemarkablePaperPro => 2154,
+            DeviceModel::RemarkablePaperPro => 2833,
             DeviceModel::Unknown => 1404, // Default to RM2
         }
     }
@@ -154,9 +155,8 @@ impl Touch {
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
-                // RMPP coordinate transformation
                 let x_input = (x_normalized * self.screen_width() as f32) as i32;
-                let y_input = ((1.0 - y_normalized) * self.screen_height() as f32) as i32;
+                let y_input = (y_normalized * self.screen_height() as f32) as i32;
                 (x_input, y_input)
             }
             _ => {
