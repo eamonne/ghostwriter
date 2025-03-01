@@ -1,6 +1,6 @@
 use anyhow::Result;
 use evdev::{Device, EventType, InputEvent};
-use log::{debug, trace, info};
+use log::{debug, info, trace};
 
 use std::thread::sleep;
 use std::time::Duration;
@@ -44,7 +44,10 @@ impl Touch {
             Some(Device::open(device_path).unwrap())
         };
 
-        Self { device, device_model }
+        Self {
+            device,
+            device_model,
+        }
     }
 
     pub fn wait_for_trigger(&mut self) -> Result<()> {
@@ -155,7 +158,7 @@ impl Touch {
                 let x_input = (x_normalized * self.screen_width() as f32) as i32;
                 let y_input = ((1.0 - y_normalized) * self.screen_height() as f32) as i32;
                 (x_input, y_input)
-            },
+            }
             _ => {
                 // RM2 coordinate transformation
                 let x_input = (x_normalized * self.screen_width() as f32) as i32;

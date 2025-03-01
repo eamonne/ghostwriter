@@ -1,8 +1,8 @@
 use anyhow::Result;
 use evdev::{Device, EventType, InputEvent};
+use log::info;
 use std::thread::sleep;
 use std::time::Duration;
-use log::info;
 
 use crate::device::DeviceModel;
 
@@ -32,7 +32,10 @@ impl Pen {
             Some(Device::open(pen_input_device).unwrap())
         };
 
-        Self { device, device_model }
+        Self {
+            device,
+            device_model,
+        }
     }
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
@@ -186,7 +189,7 @@ impl Pen {
                 let x_input = ((1.0 - y_normalized) * self.max_y_value() as f32) as i32;
                 let y_input = (x_normalized * self.max_x_value() as f32) as i32;
                 (x_input, y_input)
-            },
+            }
             _ => {
                 let x_input = ((1.0 - y_normalized) * self.max_y_value() as f32) as i32;
                 let y_input = (x_normalized * self.max_x_value() as f32) as i32;

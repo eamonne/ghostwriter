@@ -93,7 +93,7 @@ impl Screenshot {
                 let start_address = self.get_memory_range(pid)?;
                 let frame_pointer = self.calculate_frame_pointer(pid, start_address)?;
                 Ok(frame_pointer)
-            },
+            }
             _ => {
                 // Original RM2 approach
                 let output = process::Command::new("sh")
@@ -143,7 +143,8 @@ impl Screenshot {
         let mem_file_path = format!("/proc/{}/mem", pid);
         let mut file = std::fs::File::open(mem_file_path)?;
 
-        let screen_size_bytes = self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
+        let screen_size_bytes =
+            self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
 
         let mut offset: u64 = 0;
         let mut length: usize = 2;
@@ -155,17 +156,18 @@ impl Screenshot {
             let mut header = [0u8; 8];
             file.read_exact(&mut header)?;
 
-            length = (header[0] as usize) |
-                     ((header[1] as usize) << 8) |
-                     ((header[2] as usize) << 16) |
-                     ((header[3] as usize) << 24);
+            length = (header[0] as usize)
+                | ((header[1] as usize) << 8)
+                | ((header[2] as usize) << 16)
+                | ((header[3] as usize) << 24);
         }
 
         Ok(start_address + offset)
     }
 
     fn read_framebuffer(&self, pid: &str, skip_bytes: u64) -> Result<Vec<u8>> {
-        let window_bytes = self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
+        let window_bytes =
+            self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
         let mut buffer = vec![0u8; window_bytes];
         let mut file = std::fs::File::open(format!("/proc/{}/mem", pid))?;
         file.seek(std::io::SeekFrom::Start(skip_bytes))?;
@@ -198,7 +200,7 @@ impl Screenshot {
                     OUTPUT_HEIGHT,
                     image::ExtendedColorType::L8,
                 )?;
-            },
+            }
             _ => {
                 encoder.write_image(
                     resized_img.as_luma8().unwrap().as_raw(),
@@ -217,7 +219,7 @@ impl Screenshot {
             DeviceModel::RemarkablePaperPro => {
                 // RMPP uses 32-bit RGBA format
                 self.encode_png_rmpp(raw_data)
-            },
+            }
             _ => {
                 // RM2 uses 16-bit grayscale
                 self.encode_png_rm2(raw_data)
@@ -248,12 +250,7 @@ impl Screenshot {
 
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
-        encoder.write_image(
-            img.as_raw(),
-            width,
-            height,
-            image::ExtendedColorType::L8,
-        )?;
+        encoder.write_image(img.as_raw(), width, height, image::ExtendedColorType::L8)?;
 
         Ok(png_data)
     }
@@ -288,12 +285,7 @@ impl Screenshot {
 
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
-        encoder.write_image(
-            img.as_raw(),
-            width,
-            height,
-            image::ExtendedColorType::L8,
-        )?;
+        encoder.write_image(img.as_raw(), width, height, image::ExtendedColorType::L8)?;
 
         Ok(png_data)
     }

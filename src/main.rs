@@ -12,7 +12,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use ghostwriter::{
-    device::DeviceModel,
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
     pen::Pen,
@@ -122,9 +121,6 @@ fn main() -> Result<()> {
         env_logger::Env::default().default_filter_or(args.log_level.as_str()),
     )
     .init();
-    
-    let device_model = DeviceModel::detect();
-    info!("Detected device: {}", device_model.name());
 
     ghostwriter(&args)
 }
@@ -183,7 +179,10 @@ fn load_config(filename: &str) -> String {
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
+    let keyboard = shared!(Keyboard::new(
+        args.no_draw || args.no_keyboard,
+        args.no_draw_progress,
+    ));
     let pen = shared!(Pen::new(args.no_draw));
     let touch = shared!(Touch::new(args.no_draw));
 

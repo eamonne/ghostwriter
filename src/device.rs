@@ -31,5 +31,4 @@ impl DeviceModel {
             DeviceModel::Unknown => "Unknown",
         }
     }
-
 }

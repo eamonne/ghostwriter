@@ -242,7 +242,6 @@ impl Keyboard {
 
     pub fn string_to_keypresses(&mut self, input: &str) -> Result<(), evdev::Error> {
         if let Some(device) = &mut self.device {
-
             // make sure we are synced before we start; this might be paranoia
             device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
             thread::sleep(time::Duration::from_millis(10));
