@@ -61,7 +61,7 @@ impl Touch {
                     events_to_process.push(event);
                 }
             }
-            
+
             // Process the events after releasing the mutable borrow
             for event in events_to_process {
                 if event.code() == ABS_MT_POSITION_X {
@@ -72,7 +72,7 @@ impl Touch {
                 }
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
-                        let (x, y) = self.screen_to_input((position_x, position_y));
+                        let (x, y) = self.input_to_screen((position_x, position_y));
                         debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
                         if x > 700 && y < 25 {
                             debug!("Touch release in target zone!");
@@ -172,6 +172,26 @@ impl Touch {
                 // RM2 coordinate transformation
                 let x_input = (x_normalized * self.screen_width() as f32) as i32;
                 let y_input = ((1.0 - y_normalized) * self.screen_height() as f32) as i32;
+                (x_input, y_input)
+            }
+        }
+    }
+
+    fn input_to_screen(&self, (x, y): (i32, i32)) -> (i32, i32) {
+        // Swap and normalize the coordinates
+        let x_normalized = x as f32 / self.screen_width() as f32;
+        let y_normalized = y as f32 / self.screen_height() as f32;
+
+        match self.device_model {
+            DeviceModel::RemarkablePaperPro => {
+                let x_input = (x_normalized * REMARKABLE_WIDTH as f32) as i32;
+                let y_input = (y_normalized * REMARKABLE_HEIGHT as f32) as i32;
+                (x_input, y_input)
+            }
+            _ => {
+                // RM2 coordinate transformation
+                let x_input = (x_normalized * REMARKABLE_WIDTH as f32) as i32;
+                let y_input = ((1.0 - y_normalized) * REMARKABLE_HEIGHT as f32) as i32;
                 (x_input, y_input)
             }
         }
