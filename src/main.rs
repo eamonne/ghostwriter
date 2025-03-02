@@ -224,7 +224,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
     // Give time for the virtual keyboard to be plugged in
     sleep(Duration::from_millis(1000));
 
-    lock!(touch).tap_middle_bottom();
+    lock!(touch).tap_middle_bottom()?;
     sleep(Duration::from_millis(1000));
     lock!(keyboard).progress("Keyboard loaded...")?;
 
@@ -267,7 +267,6 @@ fn ghostwriter(args: &Args) -> Result<()> {
     let output_file = args.output_file.clone();
     let no_draw = args.no_draw;
     let keyboard_clone = Arc::clone(&keyboard);
-    let touch_clone = Arc::clone(&touch);
 
     let tool_config_draw_text = load_config("tool_draw_text.json");
 
@@ -328,7 +327,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         }
 
         sleep(Duration::from_millis(100));
-        lock!(touch).tap_middle_bottom();
+        lock!(touch).tap_middle_bottom()?;
         // sleep(Duration::from_millis(1000));
         // lock!(keyboard).progress("Taking screenshot...")?;
 
