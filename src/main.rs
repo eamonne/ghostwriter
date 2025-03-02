@@ -10,6 +10,7 @@ use std::sync::{Arc, Mutex};
 
 use std::thread::sleep;
 use std::time::Duration;
+use std::io::Write;
 
 use ghostwriter::{
     keyboard::Keyboard,
@@ -27,7 +28,12 @@ const REMARKABLE_HEIGHT: u32 = 1024;
 
 #[derive(Embed)]
 #[folder = "prompts/"]
-struct Asset;
+struct AssetPrompts;
+
+#[derive(Embed)]
+#[folder = "utils/"]
+#[include = "rmpp/uinput-3.17.ko"]
+struct AssetUtils;
 
 #[derive(Parser)]
 #[command(author, version)]
@@ -123,6 +129,8 @@ fn main() -> Result<()> {
     .format_timestamp_millis()
     .init();
 
+    setup_uinput()?;
+
     ghostwriter(&args)
 }
 
@@ -137,6 +145,32 @@ macro_rules! lock {
         $x.lock().unwrap()
     };
 }
+
+fn setup_uinput() -> Result<()> {
+    debug!("Checking for uinput module");
+    // Check if uinput module is loaded by looking at the lsmod output
+    let output = std::process::Command::new("lsmod")
+        .output()
+        .expect("Failed to execute lsmod");
+    let output_str = std::str::from_utf8(&output.stdout).unwrap();
+    if!output_str.contains("uinput") {
+        info!("uinput module not found, installing bundled version");
+        let uinput_module_asset = AssetUtils::get("rmpp/uinput-3.17.ko").unwrap();
+        let raw_uinput_module_data = uinput_module_asset.data.as_ref();
+        let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
+        uinput_module_file.write_all(raw_uinput_module_data)?;
+        uinput_module_file.flush()?;
+        drop(uinput_module_file);
+        let output = std::process::Command::new("insmod")
+            .arg("/tmp/uinput.ko")
+            .output()?;
+        let output_str = std::str::from_utf8(&output.stderr).unwrap();
+        info!("insmod output: {}", output_str);
+    }
+
+    Ok(())
+}
+
 
 fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
     info!("Drawing text to the screen.");
@@ -173,7 +207,7 @@ fn load_config(filename: &str) -> String {
     if std::path::Path::new(filename).exists() {
         std::fs::read_to_string(filename).unwrap()
     } else {
-        std::str::from_utf8(Asset::get(filename).unwrap().data.as_ref())
+        std::str::from_utf8(AssetPrompts::get(filename).unwrap().data.as_ref())
             .unwrap()
             .to_string()
     }
