@@ -144,22 +144,29 @@ impl Screenshot {
         let mut file = std::fs::File::open(mem_file_path)?;
 
         let screen_size_bytes =
-            self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
+            self.screen_width() as u64 * self.screen_height() as u64 * self.bytes_per_pixel() as u64;
 
         let mut offset: u64 = 0;
-        let mut length: usize = 2;
+        let mut length: u64 = 2;
 
         while length < screen_size_bytes {
+            // info!("looping while {} < {}", length, screen_size_bytes);
             offset += (length - 2) as u64;
 
+            // info!("  ... trying {}", start_address + offset + 8);
             file.seek(std::io::SeekFrom::Start(start_address + offset + 8))?;
             let mut header = [0u8; 8];
             file.read_exact(&mut header)?;
+            info!("  ... header: {:?}", &header);
 
-            length = (header[0] as usize)
-                | ((header[1] as usize) << 8)
-                | ((header[2] as usize) << 16)
-                | ((header[3] as usize) << 24);
+            length = (header[0] as u64)
+                | ((header[1] as u64) << 8)
+                | ((header[2] as u64) << 16)
+                | ((header[3] as u64) << 24);
+            info!("  ... length: {}", length);
+            if length < 2 {
+                anyhow::bail!("Invalid header length");
+            }
         }
 
         Ok(start_address + offset)
@@ -177,17 +184,20 @@ impl Screenshot {
 
     fn process_image(&self, data: Vec<u8>) -> Result<Vec<u8>> {
         // Encode the raw data to PNG
+        info!("Encoding raw image data to PNG");
         let png_data = self.encode_png(&data)?;
 
         // Resize the PNG to OUTPUT_WIDTH x OUTPUT_HEIGHT
+        info!("Resizing image to {}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
         let img = image::load_from_memory(&png_data)?;
-        let resized_img = img.resize(
+        let resized_img = img.resize_exact(
             OUTPUT_WIDTH,
             OUTPUT_HEIGHT,
             image::imageops::FilterType::Lanczos3,
         );
 
         // Encode the resized image back to PNG
+        info!("Re-encoding resized image");
         let mut resized_png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut resized_png_data);
 
@@ -195,11 +205,13 @@ impl Screenshot {
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
                 encoder.write_image(
-                    resized_img.as_luma8().unwrap().as_raw(),
+                    resized_img.as_rgba8().unwrap().as_raw(),
                     OUTPUT_WIDTH,
                     OUTPUT_HEIGHT,
-                    image::ExtendedColorType::L8,
+                    image::ExtendedColorType::Rgba8,
                 )?;
+                //   left: 3145728
+                //  right: 3130368
             }
             _ => {
                 encoder.write_image(
@@ -256,36 +268,36 @@ impl Screenshot {
     }
 
     fn encode_png_rmpp(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
-        // RMPP uses 32-bit RGBA format, but we'll convert to grayscale
         let width = self.screen_width();
         let height = self.screen_height();
 
-        // Extract grayscale from RGBA data (using average of RGB)
-        let mut processed = vec![0u8; (width * height) as usize];
-
-        for y in 0..height {
-            for x in 0..width {
-                let pixel_idx = ((y * width + x) * 4) as usize;
-
-                // Get RGB values (skip alpha)
-                let r = raw_data[pixel_idx] as u16;
-                let g = raw_data[pixel_idx + 1] as u16;
-                let b = raw_data[pixel_idx + 2] as u16;
-
-                // Convert to grayscale using average
-                let gray = ((r + g + b) / 3) as u8;
-
-                // Apply curves and store
-                processed[(y * width + x) as usize] = Self::apply_curves(gray);
-            }
-        }
-
-        let img = GrayImage::from_raw(width, height, processed)
-            .ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
-
+        // // Extract grayscale from RGBA data (using average of RGB)
+        // let mut processed = vec![0u8; (width * height) as usize];
+        //
+        // for y in 0..height {
+        //     for x in 0..width {
+        //         let pixel_idx = ((y * width + x) * 4) as usize;
+        //
+        //         // Get RGB values (skip alpha)
+        //         let r = raw_data[pixel_idx] as u16;
+        //         let g = raw_data[pixel_idx + 1] as u16;
+        //         let b = raw_data[pixel_idx + 2] as u16;
+        //
+        //         // Convert to grayscale using average
+        //         // let gray = ((r + g + b) / 3) as u8;
+        //
+        //         // Apply curves and store
+        //         processed[(y * width + x) as usize] = Self::apply_curves(gray);
+        //     }
+        // }
+        //
+        // let img = GrayImage::from_raw(width, height, processed)
+        //     .ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
+        //
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
-        encoder.write_image(img.as_raw(), width, height, image::ExtendedColorType::L8)?;
+        info!("Encoding {}x{} image", width, height);
+        encoder.write_image(raw_data, width, height, image::ExtendedColorType::Rgba8)?;
 
         Ok(png_data)
     }
