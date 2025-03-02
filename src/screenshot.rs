@@ -202,7 +202,7 @@ impl Screenshot {
         let resized_img = img.resize_exact(
             OUTPUT_WIDTH,
             OUTPUT_HEIGHT,
-            image::imageops::FilterType::Lanczos3,
+            image::imageops::FilterType::Nearest,
         );
 
         // Encode the resized image back to PNG

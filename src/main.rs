@@ -120,6 +120,7 @@ fn main() -> Result<()> {
     env_logger::Builder::from_env(
         env_logger::Env::default().default_filter_or(args.log_level.as_str()),
     )
+    .format_timestamp_millis()
     .init();
 
     ghostwriter(&args)
@@ -292,7 +293,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
             lock!(touch).wait_for_trigger()?;
         }
 
-        sleep(Duration::from_millis(1000));
+        sleep(Duration::from_millis(100));
         lock!(touch).tap_middle_bottom();
         // sleep(Duration::from_millis(1000));
         // lock!(keyboard).progress("Taking screenshot...")?;
