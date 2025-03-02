@@ -190,6 +190,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
     sleep(Duration::from_millis(1000));
 
     lock!(touch).tap_middle_bottom();
+    sleep(Duration::from_millis(1000));
     lock!(keyboard).progress("Keyboard loaded...")?;
 
     let mut engine_options = OptionMap::new();
@@ -279,7 +280,9 @@ fn ghostwriter(args: &Args) -> Result<()> {
     );
 
     lock!(keyboard).progress("Tools initialized.")?;
+        sleep(Duration::from_millis(1000));
     lock!(keyboard).progress_end()?;
+        sleep(Duration::from_millis(1000));
 
     loop {
         if args.no_trigger {
@@ -301,13 +304,14 @@ fn ghostwriter(args: &Args) -> Result<()> {
             let mut screenshot = Screenshot::new()?;
             screenshot.take_screenshot()?;
             if let Some(save_screenshot) = &args.save_screenshot {
+                info!("Saving screenshot to {}", save_screenshot);
                 screenshot.save_image(save_screenshot)?;
             }
             screenshot.base64()?
         };
 
         if args.no_submit {
-            debug!("Image not submitted to OpenAI due to --no-submit flag");
+            info!("Image not submitted to model due to --no-submit flag");
             lock!(keyboard).progress_end()?;
             return Ok(());
         }

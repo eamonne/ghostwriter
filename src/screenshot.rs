@@ -55,15 +55,19 @@ impl Screenshot {
 
     pub fn take_screenshot(&mut self) -> Result<()> {
         // Find xochitl's process
+        debug!("screenshot: finding pid");
         let pid = Self::find_xochitl_pid()?;
 
         // Find framebuffer location in memory
+        debug!("screenshot: finding address");
         let skip_bytes = self.find_framebuffer_address(&pid)?;
 
         // Read the framebuffer data
+        debug!("screenshot: reading data");
         let screenshot_data = self.read_framebuffer(&pid, skip_bytes)?;
 
         // Process the image data (transpose, color correction, etc.)
+        debug!("screenshot: processing image");
         let processed_data = self.process_image(screenshot_data)?;
 
         self.data = processed_data;
@@ -113,12 +117,15 @@ impl Screenshot {
     // Get memory range for RMPP based on goMarkableStream/pointer_arm64.go
     fn get_memory_range(&self, pid: &str) -> Result<u64> {
         let maps_file_path = format!("/proc/{}/maps", pid);
+        debug!("screenshot: reading memory range from {}", maps_file_path);
         let maps_content = std::fs::read_to_string(&maps_file_path)?;
 
         let mut memory_range = String::new();
+        debug!("Scanning for '/dev/dri/card0' in memory");
         for line in maps_content.lines() {
             if line.contains("/dev/dri/card0") {
                 memory_range = line.to_string();
+                debug!("Found memory range: {}", memory_range);
             }
         }
 
@@ -126,6 +133,7 @@ impl Screenshot {
             anyhow::bail!("No mapping found for /dev/dri/card0");
         }
 
+        debug!("Final memory range: {}", memory_range);
         let fields: Vec<&str> = memory_range.split_whitespace().collect();
         let range_field = fields[0];
         let start_end: Vec<&str> = range_field.split('-').collect();
@@ -135,6 +143,7 @@ impl Screenshot {
         }
 
         let end = u64::from_str_radix(start_end[1], 16)?;
+        debug!("range_field: {}\nstart_end: {}\nend: {}", range_field, start_end[1], end);
         Ok(end)
     }
 
@@ -150,20 +159,20 @@ impl Screenshot {
         let mut length: u64 = 2;
 
         while length < screen_size_bytes {
-            // info!("looping while {} < {}", length, screen_size_bytes);
+            // debug!("looping while {} < {}", length, screen_size_bytes);
             offset += (length - 2) as u64;
 
-            // info!("  ... trying {}", start_address + offset + 8);
+            // debug!("  ... trying {}", start_address + offset + 8);
             file.seek(std::io::SeekFrom::Start(start_address + offset + 8))?;
             let mut header = [0u8; 8];
             file.read_exact(&mut header)?;
-            info!("  ... header: {:?}", &header);
+            debug!("  ... header: {:?}", &header);
 
             length = (header[0] as u64)
                 | ((header[1] as u64) << 8)
                 | ((header[2] as u64) << 16)
                 | ((header[3] as u64) << 24);
-            info!("  ... length: {}", length);
+            debug!("  ... length: {}", length);
             if length < 2 {
                 anyhow::bail!("Invalid header length");
             }
@@ -184,11 +193,11 @@ impl Screenshot {
 
     fn process_image(&self, data: Vec<u8>) -> Result<Vec<u8>> {
         // Encode the raw data to PNG
-        info!("Encoding raw image data to PNG");
+        debug!("Encoding raw image data to PNG");
         let png_data = self.encode_png(&data)?;
 
         // Resize the PNG to OUTPUT_WIDTH x OUTPUT_HEIGHT
-        info!("Resizing image to {}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
+        debug!("Resizing image to {}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
         let img = image::load_from_memory(&png_data)?;
         let resized_img = img.resize_exact(
             OUTPUT_WIDTH,
@@ -197,7 +206,7 @@ impl Screenshot {
         );
 
         // Encode the resized image back to PNG
-        info!("Re-encoding resized image");
+        debug!("Re-encoding resized image");
         let mut resized_png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut resized_png_data);
 
@@ -296,7 +305,7 @@ impl Screenshot {
         //
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
-        info!("Encoding {}x{} image", width, height);
+        debug!("Encoding {}x{} image", width, height);
         encoder.write_image(raw_data, width, height, image::ExtendedColorType::Rgba8)?;
 
         Ok(png_data)
