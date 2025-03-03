@@ -8,8 +8,8 @@ use std::time::Duration;
 use crate::device::DeviceModel;
 
 // Output dimensions remain the same for both devices
-const REMARKABLE_WIDTH: u16 = 768;
-const REMARKABLE_HEIGHT: u16 = 1024;
+const VIRTUAL_WIDTH: u16 = 768;
+const VIRTUAL_HEIGHT: u16 = 1024;
 
 // Event codes
 const ABS_MT_SLOT: u16 = 47;
@@ -72,7 +72,7 @@ impl Touch {
                 }
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
-                        let (x, y) = self.input_to_screen((position_x, position_y));
+                        let (x, y) = self.input_to_virtual((position_x, position_y));
                         debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
                         if x > 700 && y < 25 {
                             debug!("Touch release in target zone!");
@@ -85,7 +85,7 @@ impl Touch {
     }
 
     pub fn touch_start(&mut self, xy: (i32, i32)) -> Result<()> {
-        let (x, y) = self.screen_to_input(xy);
+        let (x, y) = self.virtual_to_input(xy);
         if let Some(device) = &mut self.device {
             trace!("touch_start at ({}, {})", x, y);
             // sleep(Duration::from_millis(100));
@@ -119,7 +119,7 @@ impl Touch {
     }
 
     pub fn goto_xy(&mut self, xy: (i32, i32)) -> Result<()> {
-        let (x, y) = self.screen_to_input(xy);
+        let (x, y) = self.virtual_to_input(xy);
         if let Some(device) = &mut self.device {
             device.send_events(&[
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
@@ -157,10 +157,10 @@ impl Touch {
         }
     }
 
-    fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
+    fn virtual_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
-        let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
-        let y_normalized = y as f32 / REMARKABLE_HEIGHT as f32;
+        let x_normalized = x as f32 / VIRTUAL_WIDTH as f32;
+        let y_normalized = y as f32 / VIRTUAL_HEIGHT as f32;
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
@@ -177,21 +177,21 @@ impl Touch {
         }
     }
 
-    fn input_to_screen(&self, (x, y): (i32, i32)) -> (i32, i32) {
+    fn input_to_virtual(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
         let x_normalized = x as f32 / self.screen_width() as f32;
         let y_normalized = y as f32 / self.screen_height() as f32;
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
-                let x_input = (x_normalized * REMARKABLE_WIDTH as f32) as i32;
-                let y_input = (y_normalized * REMARKABLE_HEIGHT as f32) as i32;
+                let x_input = (x_normalized * VIRTUAL_WIDTH as f32) as i32;
+                let y_input = (y_normalized * VIRTUAL_HEIGHT as f32) as i32;
                 (x_input, y_input)
             }
             _ => {
                 // RM2 coordinate transformation
-                let x_input = (x_normalized * REMARKABLE_WIDTH as f32) as i32;
-                let y_input = ((1.0 - y_normalized) * REMARKABLE_HEIGHT as f32) as i32;
+                let x_input = (x_normalized * VIRTUAL_WIDTH as f32) as i32;
+                let y_input = ((1.0 - y_normalized) * VIRTUAL_HEIGHT as f32) as i32;
                 (x_input, y_input)
             }
         }

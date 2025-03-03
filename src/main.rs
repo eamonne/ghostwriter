@@ -23,8 +23,8 @@ use ghostwriter::{
 };
 
 // Output dimensions remain the same for both devices
-const REMARKABLE_WIDTH: u32 = 768;
-const REMARKABLE_HEIGHT: u32 = 1024;
+const VIRTUAL_WIDTH: u32 = 768;
+const VIRTUAL_HEIGHT: u32 = 1024;
 
 #[derive(Embed)]
 #[folder = "prompts/"]
@@ -191,7 +191,7 @@ fn draw_svg(
 ) -> Result<()> {
     info!("Drawing SVG to the screen.");
     keyboard.progress_end()?;
-    let bitmap = svg_to_bitmap(svg_data, REMARKABLE_WIDTH, REMARKABLE_HEIGHT)?;
+    let bitmap = svg_to_bitmap(svg_data, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
     if let Some(save_bitmap) = save_bitmap {
         write_bitmap_to_file(&bitmap, save_bitmap)?;
     }

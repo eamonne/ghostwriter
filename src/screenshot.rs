@@ -11,8 +11,8 @@ use image::ImageEncoder;
 
 use crate::device::DeviceModel;
 
-const OUTPUT_WIDTH: u32 = 768;
-const OUTPUT_HEIGHT: u32 = 1024;
+const VIRTUAL_WIDTH: u32 = 768;
+const VIRTUAL_HEIGHT: u32 = 1024;
 
 pub struct Screenshot {
     data: Vec<u8>,
@@ -196,12 +196,12 @@ impl Screenshot {
         debug!("Encoding raw image data to PNG");
         let png_data = self.encode_png(&data)?;
 
-        // Resize the PNG to OUTPUT_WIDTH x OUTPUT_HEIGHT
-        debug!("Resizing image to {}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
+        // Resize the PNG to VIRTUAL_WIDTH x VIRTUAL_HEIGHT
+        debug!("Resizing image to {}x{}", VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
         let img = image::load_from_memory(&png_data)?;
         let resized_img = img.resize_exact(
-            OUTPUT_WIDTH,
-            OUTPUT_HEIGHT,
+            VIRTUAL_WIDTH,
+            VIRTUAL_HEIGHT,
             image::imageops::FilterType::Nearest,
         );
 
@@ -215,18 +215,16 @@ impl Screenshot {
             DeviceModel::RemarkablePaperPro => {
                 encoder.write_image(
                     resized_img.as_rgba8().unwrap().as_raw(),
-                    OUTPUT_WIDTH,
-                    OUTPUT_HEIGHT,
+                    VIRTUAL_WIDTH,
+                    VIRTUAL_HEIGHT,
                     image::ExtendedColorType::Rgba8,
                 )?;
-                //   left: 3145728
-                //  right: 3130368
             }
             _ => {
                 encoder.write_image(
                     resized_img.as_luma8().unwrap().as_raw(),
-                    OUTPUT_WIDTH,
-                    OUTPUT_HEIGHT,
+                    VIRTUAL_WIDTH,
+                    VIRTUAL_HEIGHT,
                     image::ExtendedColorType::L8,
                 )?;
             }
@@ -279,35 +277,10 @@ impl Screenshot {
     fn encode_png_rmpp(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
         let width = self.screen_width();
         let height = self.screen_height();
-
-        // // Extract grayscale from RGBA data (using average of RGB)
-        // let mut processed = vec![0u8; (width * height) as usize];
-        //
-        // for y in 0..height {
-        //     for x in 0..width {
-        //         let pixel_idx = ((y * width + x) * 4) as usize;
-        //
-        //         // Get RGB values (skip alpha)
-        //         let r = raw_data[pixel_idx] as u16;
-        //         let g = raw_data[pixel_idx + 1] as u16;
-        //         let b = raw_data[pixel_idx + 2] as u16;
-        //
-        //         // Convert to grayscale using average
-        //         // let gray = ((r + g + b) / 3) as u8;
-        //
-        //         // Apply curves and store
-        //         processed[(y * width + x) as usize] = Self::apply_curves(gray);
-        //     }
-        // }
-        //
-        // let img = GrayImage::from_raw(width, height, processed)
-        //     .ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
-        //
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
         debug!("Encoding {}x{} image", width, height);
         encoder.write_image(raw_data, width, height, image::ExtendedColorType::Rgba8)?;
-
         Ok(png_data)
     }
 

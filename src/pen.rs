@@ -7,8 +7,8 @@ use std::time::Duration;
 use crate::device::DeviceModel;
 
 // Output dimensions remain the same for both devices
-const REMARKABLE_WIDTH: u32 = 768;
-const REMARKABLE_HEIGHT: u32 = 1024;
+const VIRTUAL_WIDTH: u32 = 768;
+const VIRTUAL_HEIGHT: u32 = 1024;
 
 pub struct Pen {
     device: Option<Device>,
@@ -181,8 +181,8 @@ impl Pen {
 
     fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
-        let x_normalized = x as f32 / REMARKABLE_WIDTH as f32;
-        let y_normalized = y as f32 / REMARKABLE_HEIGHT as f32;
+        let x_normalized = x as f32 / VIRTUAL_WIDTH as f32;
+        let y_normalized = y as f32 / VIRTUAL_HEIGHT as f32;
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
