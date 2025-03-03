@@ -226,6 +226,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     lock!(touch).tap_middle_bottom()?;
     sleep(Duration::from_millis(1000));
+
     lock!(keyboard).progress("Keyboard loaded...")?;
 
     let mut engine_options = OptionMap::new();
@@ -326,7 +327,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
             lock!(touch).wait_for_trigger()?;
         }
 
-        sleep(Duration::from_millis(100));
+        // sleep(Duration::from_millis(1000));
         lock!(touch).tap_middle_bottom()?;
         // sleep(Duration::from_millis(1000));
         // lock!(keyboard).progress("Taking screenshot...")?;

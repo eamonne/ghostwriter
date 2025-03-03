@@ -88,7 +88,7 @@ impl Touch {
         let (x, y) = self.screen_to_input(xy);
         if let Some(device) = &mut self.device {
             trace!("touch_start at ({}, {})", x, y);
-            sleep(Duration::from_millis(100));
+            // sleep(Duration::from_millis(100));
             device.send_events(&[
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
                 InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
@@ -133,10 +133,10 @@ impl Touch {
     }
 
     pub fn tap_middle_bottom(&mut self) -> Result<()> {
-        self.touch_start((384, 1000)).unwrap(); // middle bottom
-        sleep(Duration::from_millis(10));
+        self.touch_start((384, 1023)).unwrap(); // middle bottom
+        sleep(Duration::from_millis(100));
         self.touch_stop().unwrap();
-        sleep(Duration::from_millis(10));
+        // sleep(Duration::from_millis(10));
         // sleep(Duration::from_millis(100));
         Ok(())
     }
