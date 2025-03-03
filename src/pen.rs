@@ -39,7 +39,7 @@ impl Pen {
     }
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
-        self.draw_line(self.screen_to_input(p1), self.screen_to_input(p2))
+        self.draw_line(self.virtual_to_input(p1), self.virtual_to_input(p2))
     }
 
     pub fn draw_line(&mut self, (x1, y1): (i32, i32), (x2, y2): (i32, i32)) -> Result<()> {
@@ -84,13 +84,13 @@ impl Pen {
             for (x, &pixel) in row.iter().enumerate() {
                 if pixel {
                     if !is_pen_down {
-                        self.goto_xy_screen((x as i32, y as i32))?;
+                        self.goto_xy_virtual((x as i32, y as i32))?;
                         self.pen_down()?;
                         is_pen_down = true;
                         sleep(Duration::from_millis(1));
                     }
-                    self.goto_xy_screen((x as i32, y as i32))?;
-                    self.goto_xy_screen((x as i32 + 1, y as i32))?;
+                    self.goto_xy_virtual((x as i32, y as i32))?;
+                    self.goto_xy_virtual((x as i32 + 1, y as i32))?;
                 } else if is_pen_down {
                     self.pen_up()?;
                     is_pen_down = false;
@@ -148,8 +148,8 @@ impl Pen {
         Ok(())
     }
 
-    pub fn goto_xy_screen(&mut self, point: (i32, i32)) -> Result<()> {
-        self.goto_xy(self.screen_to_input(point))
+    pub fn goto_xy_virtual(&mut self, point: (i32, i32)) -> Result<()> {
+        self.goto_xy(self.virtual_to_input(point))
     }
 
     pub fn goto_xy(&mut self, (x, y): (i32, i32)) -> Result<()> {
@@ -179,15 +179,15 @@ impl Pen {
         }
     }
 
-    fn screen_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
+    fn virtual_to_input(&self, (x, y): (i32, i32)) -> (i32, i32) {
         // Swap and normalize the coordinates
         let x_normalized = x as f32 / VIRTUAL_WIDTH as f32;
         let y_normalized = y as f32 / VIRTUAL_HEIGHT as f32;
 
         match self.device_model {
             DeviceModel::RemarkablePaperPro => {
-                let x_input = ((1.0 - y_normalized) * self.max_y_value() as f32) as i32;
-                let y_input = (x_normalized * self.max_x_value() as f32) as i32;
+                let x_input = (x_normalized * self.max_x_value() as f32) as i32;
+                let y_input = (y_normalized * self.max_y_value() as f32) as i32;
                 (x_input, y_input)
             }
             _ => {
