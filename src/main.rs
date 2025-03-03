@@ -373,7 +373,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         debug!("Segmentation description: {}", segmentation_description);
 
         engine.clear_content();
-        engine.add_text_content(prompt);
+        engine.add_image_content(&base64_image);
 
         if args.apply_segmentation {
             engine.add_text_content(
@@ -381,7 +381,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
             );
         }
 
-        engine.add_image_content(&base64_image);
+        engine.add_text_content(prompt);
 
         info!("Executing the engine (call out to {}", engine_name);
         lock!(keyboard).progress("thinking...")?;
