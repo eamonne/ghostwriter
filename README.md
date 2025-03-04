@@ -142,6 +142,17 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * I used a powered usb-hub to get an external keyboard plugged in, trying to see what sort of keyboard shortcuts we might have
   * That helped to get a further sense for where the keyboard input goes
   * So now I'm sending an extra touch-event in the bottom-center of the screen which will make the next keyboard input always go below the lowest element, which is what I wanted. Before it would go below the most recent typed text, so if you drew under that it would get confusing. Before, the answer to "what is your favorite color?" would have been placed directly below the first typed output; now it is nice and neatly put lower down! Also I guess this is a dream-bubble of a sheep?<br /><img src="docs/sheep-dreams.png" width=300 border=1>
+* 2025-03-03 -- reMarkaple Paper Pro!!!
+  * This project hit [hackernews](https://news.ycombinator.com/item?id=42979986) and [reddit r/remarkableTablet](https://www.reddit.com/r/RemarkableTablet/comments/1ikhpm5/this_is_wild/)!
+  * One bit of feedback I got is ... [request for the reMarkable Paper Pro](https://github.com/awwaiid/ghostwriter/issues/3)
+  * ... but I didn't have one of those
+  * ... but BestBuy had them on display and I got to play with one and it was nice
+  * ... so now I have one
+  * ... and now Ghostwriter works on that too!
+  * The bits where the screens and inputs are slightly different was expected
+  * But what wasn't expected is that the `uinput` kernel module is not included in the device. But I used the [the linux published by reMarkable](https://github.com/reMarkable/linux-imx-rm) to build and bundle it
+  * So now when you run ghostwriter and the uinput module isn't loaded it will try to load it
+  * This is going to be a BIG PAIN since different linux versions are not compatible with each other and every new reMarkable release usually gets a new linux...
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
