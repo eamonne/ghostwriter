@@ -386,7 +386,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         info!("Executing the engine (call out to {}", engine_name);
         lock!(keyboard).progress("thinking...")?;
         if engine.execute().is_err() {
-            lock!(keyboard).progress(" model error. ");
+            lock!(keyboard).progress(" model error. ")?;
         }
 
         if args.no_loop {
