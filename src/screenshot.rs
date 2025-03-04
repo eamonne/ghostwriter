@@ -143,7 +143,10 @@ impl Screenshot {
         }
 
         let end = u64::from_str_radix(start_end[1], 16)?;
-        debug!("range_field: {}\nstart_end: {}\nend: {}", range_field, start_end[1], end);
+        debug!(
+            "range_field: {}\nstart_end: {}\nend: {}",
+            range_field, start_end[1], end
+        );
         Ok(end)
     }
 
@@ -152,8 +155,9 @@ impl Screenshot {
         let mem_file_path = format!("/proc/{}/mem", pid);
         let mut file = std::fs::File::open(mem_file_path)?;
 
-        let screen_size_bytes =
-            self.screen_width() as u64 * self.screen_height() as u64 * self.bytes_per_pixel() as u64;
+        let screen_size_bytes = self.screen_width() as u64
+            * self.screen_height() as u64
+            * self.bytes_per_pixel() as u64;
 
         let mut offset: u64 = 0;
         let mut length: u64 = 2;

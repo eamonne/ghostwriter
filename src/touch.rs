@@ -73,7 +73,10 @@ impl Touch {
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
                         let (x, y) = self.input_to_virtual((position_x, position_y));
-                        debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
+                        debug!(
+                            "Touch release detected at ({}, {}) normalized ({}, {})",
+                            position_x, position_y, x, y
+                        );
                         if x > 700 && y < 25 {
                             debug!("Touch release in target zone!");
                             return Ok(());
