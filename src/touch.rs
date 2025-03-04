@@ -143,17 +143,17 @@ impl Touch {
 
     fn screen_width(&self) -> u32 {
         match self.device_model {
-            DeviceModel::Remarkable2 => 1872,
+            DeviceModel::Remarkable2 => 1404,
             DeviceModel::RemarkablePaperPro => 2065,
-            DeviceModel::Unknown => 1872, // Default to RM2
+            DeviceModel::Unknown => 1404, // Default to RM2
         }
     }
 
     fn screen_height(&self) -> u32 {
         match self.device_model {
-            DeviceModel::Remarkable2 => 1404,
+            DeviceModel::Remarkable2 => 1872,
             DeviceModel::RemarkablePaperPro => 2833,
-            DeviceModel::Unknown => 1404, // Default to RM2
+            DeviceModel::Unknown => 1872, // Default to RM2
         }
     }
 

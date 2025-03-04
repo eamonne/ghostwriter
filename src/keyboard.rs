@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::debug;
 
 use std::collections::HashMap;
 use std::{thread, time};
@@ -31,6 +32,7 @@ impl Keyboard {
     }
 
     fn create_virtual_device() -> VirtualDevice {
+        debug!("Creating virtual keyboard");
         let mut keys = AttributeSet::new();
 
         keys.insert(Key::KEY_A);
