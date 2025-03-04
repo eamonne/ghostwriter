@@ -326,7 +326,8 @@ fn ghostwriter(args: &Args) -> Result<()> {
             lock!(touch).wait_for_trigger()?;
         }
 
-        // sleep(Duration::from_millis(1000));
+        // Sleep a bit to differentiate the touches
+        sleep(Duration::from_millis(100));
         lock!(touch).tap_middle_bottom()?;
         // sleep(Duration::from_millis(1000));
         // lock!(keyboard).progress("Taking screenshot...")?;
