@@ -93,7 +93,7 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * So far this technique is looking good for SVG output, but it'd be nice to somehow render keyboard output locally too. That is tricker since the keyboard input rendering is done by the reMarkable app
 * **2024-12-02** - Initial segmenter
   * With a LOT of help from claude/copilot I have added a basic image segmenting step
-  * This does some basic segmenting and then gives the segment coordinates to the VLM to consider
+  * This does some basic segmenting and then gives the segment coordinates to the Vision-LLM to consider
   * Only hooked it up with claude for now, need to merge those two models
   * ... It helps with putting X in boxes a LOT!!<br/><img src="docs/x-in-box-miss.png" width=200 border=1> <img src="docs/x-in-box-hit.png" width=200 border=1>
   * Need to get some automation around the evaluations
@@ -114,7 +114,7 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * Oh yes. Now you can take prompts/general.json, rename it to `james.json` and go in and add "Your name is James" into the prompt. Then copy that to your reMarkable
   * Now run `./remarkable --prompt james.json` and it has a locally modified prompt!<br/><img src="docs/james-name.png" width=300 border=1>
 * **2024-12-19** -- Not Quite Local
-  * On the internet they suggested a local-network VLM mode
+  * On the internet they suggested a local-network Vision-LLM mode
   * Ollama has that! So I tried...
   * But it says that llama3.2-vision doesn't have tools :(
   * But Groq llama-3.2 does!
@@ -170,7 +170,7 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * Represent different use-cases
   * Some of these, such as TODO-extraction, might have specific expectations for output or execution, but most of them won't
   * Run through the system to get example output -- text, svg, actions
-  * Write a test suite to judge the results .... somewhat human powered? Separate VLM judge?
+  * Write a test suite to judge the results .... somewhat human powered? Separate Vision-LLM judge?
 * [WIP] Prompt library
   * There is already the start of this in <a href="prompts/">prompts/</a>
   * The idea is to give a set of tools (maybe actual llm "tools") that can be configured in the prompt
@@ -178,7 +178,7 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * Example: a prompt that is good at my todo list management. It would look for "todo", extract that into a todo, and then run `add-todo.sh` or something
     * (which would in turn ssh somewhere to add something to taskwarrior)
 * Initial config
-  * On first run, maybe create a config file
+  * On first run (or with a flag), create a config file
   * Could prompt for openai key and then write it into the file
   * Maybe an auto-start, auto-recovery?
 * Generate Diagrams
@@ -187,11 +187,11 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * Let it look things up
   * Let it send me stuff ... emails, slacks
 * Conversation Mode
-  * On a single screen, keep track of each version of the screen betweent turns
+  * On a single screen, keep track of each version of the screen between turns
   * So first send would be the screen
   * Second send would be the original screen and then the response screen (maybe with claude output in red) and then the new additions (maybe in green?)
     * This could then be a whole chain for the page
-    * Could have two separate buttons to trigger the VLM -- one for "new prompt" and one for "continue"
+    * Could have two separate buttons to trigger the Vision-LLM -- one for "new prompt" and one for "continue"
   * OR we could make it so that every time it was the last three:
     * Black: Original
     * Red: Claude response
@@ -199,9 +199,14 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * Or could use the same color structure but a whole chain of messages?
   * Might be weird when we go to a new blank page though. It'd look like the new input erased everything
   * In general this would also make it easier to handle scrolling maybe
-* Run off of a network-local VLM (like ollama)
+* Run off of a network-local Vision-LLM (like ollama)
   * First attempt at using the OpenAI-API compatible ollama failed; the ollama LLAMA 3.2 vision model doesn't support tools
   * Though Groq has a modified llama-3.2-vision that DOES have tools... but it isn't nearly as good as ChatGPT, Claude, or Gemini.
+* Streaming LLM services with interruption
+* Use async to give feedback faster and in parallel
+* Try out the new OpenAI responses API
+* See if we can incorporate MCP (Model Context Protocol)
+  * Maybe a proxy to a cloud hosted thing?
 
 ## References
 * Generally pulled resources from [Awesome reMarkable](https://github.com/reHackable/awesome-reMarkable)
