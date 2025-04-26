@@ -18,10 +18,14 @@ export ANTHROPIC_API_KEY=your-key-here
 export GOOGLE_API_KEY=your-key-here
 ```
 
-Install by getting the binary to your remarkable. On your not-remarkable:
+Install by getting the binary to your remarkable. On your not-remarkable (ie. your laptop):
 
 ```sh
-wget https://github.com/awwaiid/ghostwriter/releases/latest/download/ghostwriter
+# For the reMarkable2
+wget -O ghostwriter https://github.com/awwaiid/ghostwriter/releases/latest/download/ghostwriter-rm2
+
+# For the reMarkable Paper Pro
+wget -O ghostwriter https://github.com/awwaiid/ghostwriter/releases/latest/download/ghostwriter-rmpp
 
 # Replace this ip address with your remarkable ip address
 scp ghostwriter root@192.168.1.117:
@@ -40,7 +44,7 @@ chmod +x ./ghostwriter
 
 First you need to start `ghostwriter` on the reMarkable. SSH into your remarkable and run:
 ```
-# Use the defaults, including claude-3-5-sonnet
+# Use the defaults, including claude-3-7-sonnet
 ./ghostwriter
 
 # Use ChatGPT with the gpt-4o-mini model
@@ -48,6 +52,16 @@ First you need to start `ghostwriter` on the reMarkable. SSH into your remarkabl
 ```
 
 Draw some stuff on your screen, and then trigger the assistant by *touching/tapping the upper-right corner with your finger*. In the ssh session you'll see other touch-detections and there is a log of what happens while it is processing. You should see some dots drawn during processing and then a typewritten or drawn response!
+
+### Run in the background
+
+To run in the background, start it (on the remarkable) with `nohup`:
+
+```
+nohup ./ghostwriter --model gpt-4o-mini &
+```
+
+(TODO: figure out how to run it on boot!)
 
 ## Status / Journal
 * **2024-10-06** - Bootstrapping
@@ -142,7 +156,7 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * I used a powered usb-hub to get an external keyboard plugged in, trying to see what sort of keyboard shortcuts we might have
   * That helped to get a further sense for where the keyboard input goes
   * So now I'm sending an extra touch-event in the bottom-center of the screen which will make the next keyboard input always go below the lowest element, which is what I wanted. Before it would go below the most recent typed text, so if you drew under that it would get confusing. Before, the answer to "what is your favorite color?" would have been placed directly below the first typed output; now it is nice and neatly put lower down! Also I guess this is a dream-bubble of a sheep?<br /><img src="docs/sheep-dreams.png" width=300 border=1>
-* 2025-03-03 -- reMarkaple Paper Pro!!!
+* **2025-03-03** -- reMarkaple Paper Pro!!!
   * This project hit [hackernews](https://news.ycombinator.com/item?id=42979986) and [reddit r/remarkableTablet](https://www.reddit.com/r/RemarkableTablet/comments/1ikhpm5/this_is_wild/)!
   * One bit of feedback I got is ... [request for the reMarkable Paper Pro](https://github.com/awwaiid/ghostwriter/issues/3)
   * ... but I didn't have one of those
@@ -153,6 +167,10 @@ Draw some stuff on your screen, and then trigger the assistant by *touching/tapp
   * But what wasn't expected is that the `uinput` kernel module is not included in the device. But I used the [the linux published by reMarkable](https://github.com/reMarkable/linux-imx-rm) to build and bundle it
   * So now when you run ghostwriter and the uinput module isn't loaded it will try to load it
   * This is going to be a BIG PAIN since different linux versions are not compatible with each other and every new reMarkable release usually gets a new linux...
+* **2025-04-26** -- More reMarkable Paper Pro, trying pen-SVG-drawing
+  * The `uinput` module is still not compiled by default, but I got it sorted out to load whatever module is needed
+  * So now it has the one for 3.16, 3.17, and 3.18
+  * In a branch, I've been working on using [uSVG](https://docs.rs/usvg/latest/usvg/) and [svg2polylines](https://docs.rs/crate/svg2polylines/latest) to make SVG drawing both better and more fun; it currently rasterizes and draws dots (stipple) which kinda works but is sideways
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!

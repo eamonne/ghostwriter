@@ -59,7 +59,7 @@ struct Args {
     engine_api_key: Option<String>,
 
     /// Sets the model to use
-    #[arg(long, short, default_value = "claude-3-5-sonnet-latest")]
+    #[arg(long, short, default_value = "claude-3-7-sonnet-latest")]
     model: String,
 
     /// Sets the prompt to use
