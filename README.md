@@ -254,7 +254,26 @@ mv tmp/* evaluations/$evaluation_name
 convert \( evaluations/$evaluation_name/input.png -colorspace RGB \) \( tmp/result.png -type truecolormatte -transparent white -fill red -colorize 100 \) -compose Over -composite tmp/merged-output.png
 ```
 
-Prompt / Tool ideas:
+### Building uinput
+
+* clone repo
+* switch to target release branch
+* extract
+* edit arch/arm64/configs/ferrari_defconfig
+* Add `CONFIG_INPUT_UINPUT=m`
+* Follow the readme to build:
+
+```
+export make=make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+make ferrari_defconfig
+make -j$(nproc)
+make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./output modules_install
+```
+
+* copy output/lib/modules/.../kernel/drivers/input/misc/uinput.ko for loading
+
+
+### Prompt / Tool ideas:
 * There are a few models for tools -- each tool can be re-usable and generalized or each tool could include things like extra-inputs for chain-of thought and hints for what goes into each parameter
 * The prompts should be plain JSON or YAML and should be normalized across V/LLM models
 * A general direction I'm thinking is to have top-level "modes" that each have a main prompt and a set of tools they can use
@@ -267,7 +286,7 @@ Prompt / Tool ideas:
 * But overall what we're leading to here is a system where the prompts are easy to write, easy to copy/paste, easy to maintain
 * And then maybe we can have a set of evals or examples that are easy to use on top of a prompt mode
 * Increasingly, the reMarkable2 case might HAPPEN to be a specific prompt we set up in this system...
-* So the state machine chould be:
+* So the state machine could be:
 
 ```mermaid
 stateDiagram-v2

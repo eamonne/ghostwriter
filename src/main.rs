@@ -32,7 +32,7 @@ struct AssetPrompts;
 
 #[derive(Embed)]
 #[folder = "utils/"]
-#[include = "rmpp/uinput-3.17.ko"]
+#[include = "rmpp/uinput-*"]
 struct AssetUtils;
 
 #[derive(Parser)]
@@ -121,6 +121,7 @@ struct Args {
 
 fn main() -> Result<()> {
     dotenv().ok();
+
     let args = Args::parse();
 
     env_logger::Builder::from_env(
@@ -153,9 +154,32 @@ fn setup_uinput() -> Result<()> {
         .output()
         .expect("Failed to execute lsmod");
     let output_str = std::str::from_utf8(&output.stdout).unwrap();
-    if !output_str.contains("uinput") {
+    if output_str.contains("uinput") {
+        debug!("uinput module already loaded");
+    } else {
         info!("uinput module not found, installing bundled version");
-        let uinput_module_asset = AssetUtils::get("rmpp/uinput-3.17.ko").unwrap();
+
+
+        let os_info_path = String::from("/etc/os-release");
+        if std::path::Path::new(os_info_path.as_str()).exists() {
+            dotenv::from_path(os_info_path)?;
+        }
+
+        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap().to_string();
+
+        if img_version.is_empty() {
+            return Ok(());
+        }
+
+        let short_version = img_version
+            .split('.')
+            .take(2)
+            .collect::<Vec<&str>>()
+            .join(".");
+
+        let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
+
+        let uinput_module_asset = AssetUtils::get(target_module_filename.as_str()).unwrap();
         let raw_uinput_module_data = uinput_module_asset.data.as_ref();
         let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
         uinput_module_file.write_all(raw_uinput_module_data)?;
