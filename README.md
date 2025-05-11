@@ -171,6 +171,11 @@ nohup ./ghostwriter --model gpt-4o-mini &
   * The `uinput` module is still not compiled by default, but I got it sorted out to load whatever module is needed
   * So now it has the one for 3.16, 3.17, and 3.18
   * In a branch, I've been working on using [uSVG](https://docs.rs/usvg/latest/usvg/) and [svg2polylines](https://docs.rs/crate/svg2polylines/latest) to make SVG drawing both better and more fun; it currently rasterizes and draws dots (stipple) which kinda works but is sideways
+* **2025-05-10** -- Anthropic `thinking` and `web_search`!
+  * Added thinking and thinking-tokens for anthropic!
+  * Handles the new response that shows the thinking, but doesn't send to the screen
+  * ALSO added web-search for anthropic, they now do this server side!
+  * Not turned on by default quite yet, but you can run `./ghostwriter --thinking --web-search` to get it all
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
@@ -217,6 +222,7 @@ nohup ./ghostwriter --model gpt-4o-mini &
   * Or could use the same color structure but a whole chain of messages?
   * Might be weird when we go to a new blank page though. It'd look like the new input erased everything
   * In general this would also make it easier to handle scrolling maybe
+  * Maybe two different triggers -- a continuation trigger and a start-anew trigger
 * Run off of a network-local Vision-LLM (like ollama)
   * First attempt at using the OpenAI-API compatible ollama failed; the ollama LLAMA 3.2 vision model doesn't support tools
   * Though Groq has a modified llama-3.2-vision that DOES have tools... but it isn't nearly as good as ChatGPT, Claude, or Gemini.
@@ -225,6 +231,7 @@ nohup ./ghostwriter --model gpt-4o-mini &
 * Try out the new OpenAI responses API
 * See if we can incorporate MCP (Model Context Protocol)
   * Maybe a proxy to a cloud hosted thing?
+* Allow non-tool-use responses to either be ignored or for regular text to be turned into keyboard (draw_text) tool
 
 ## References
 * Generally pulled resources from [Awesome reMarkable](https://github.com/reHackable/awesome-reMarkable)
