@@ -77,7 +77,7 @@ impl Touch {
                             "Touch release detected at ({}, {}) normalized ({}, {})",
                             position_x, position_y, x, y
                         );
-                        if x > 700 && y < 25 {
+                        if x > 700 && y < 50 {
                             debug!("Touch release in target zone!");
                             return Ok(());
                         }
