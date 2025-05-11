@@ -1,5 +1,6 @@
 use anyhow::Result;
-use evdev::{Device, EventType, InputEvent};
+use evdev::{Device, InputEvent};
+use evdev::EventType as EvdevEventType;
 use log::{debug, info, trace};
 
 use std::thread::sleep;
@@ -93,15 +94,15 @@ impl Touch {
             trace!("touch_start at ({}, {})", x, y);
             // sleep(Duration::from_millis(100));
             device.send_events(&[
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_X, x),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_Y, y),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_PRESSURE, 100),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TOUCH_MAJOR, 17),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TOUCH_MINOR, 17),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_ORIENTATION, 4),
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_SLOT, 0),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_TRACKING_ID, 1),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_POSITION_X, x),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_POSITION_Y, y),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_PRESSURE, 100),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_TOUCH_MAJOR, 17),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_TOUCH_MINOR, 17),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_ORIENTATION, 4),
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
             sleep(Duration::from_millis(1));
         }
@@ -112,9 +113,9 @@ impl Touch {
         if let Some(device) = &mut self.device {
             trace!("touch_stop");
             device.send_events(&[
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, -1),
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_SLOT, 0),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_TRACKING_ID, -1),
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
             sleep(Duration::from_millis(1));
         }
@@ -125,11 +126,11 @@ impl Touch {
         let (x, y) = self.virtual_to_input(xy);
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_SLOT, 0),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_TRACKING_ID, 1),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_X, x),
-                InputEvent::new(EventType::ABSOLUTE, ABS_MT_POSITION_Y, y),
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_SLOT, 0),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_TRACKING_ID, 1),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_POSITION_X, x),
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, ABS_MT_POSITION_Y, y),
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
         Ok(())

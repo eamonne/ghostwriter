@@ -4,7 +4,6 @@ use anyhow::Result;
 use log::debug;
 use serde_json::json;
 use serde_json::Value as json;
-use ureq::Error;
 
 pub struct Tool {
     name: String,
@@ -133,23 +132,22 @@ impl LLMEngine for Anthropic {
         debug!("Request: {}", body);
 
         let raw_response = ureq::post(&format!("{}/v1/messages", self.base_url))
-            .set("x-api-key", self.api_key.as_str())
-            .set("anthropic-version", "2023-06-01")
-            .set("Content-Type", "application/json")
+            .header("x-api-key", self.api_key.as_str())
+            .header("anthropic-version", "2023-06-01")
+            .header("Content-Type", "application/json")
             .send_json(&body);
 
-        let response = match raw_response {
+        let mut response = match raw_response {
             Ok(response) => response,
-            Err(Error::Status(code, response)) => {
-                debug!("Error: {}", code);
-                let json: json = response.into_json()?;
-                debug!("Response: {}", json);
-                return Err(anyhow::anyhow!("API ERROR"));
+            Err(err) => {
+                debug!("API Error: {}", err);
+                return Err(anyhow::anyhow!("API ERROR: {}", err));
             }
-            Err(_) => return Err(anyhow::anyhow!("OTHER API ERROR")),
         };
 
-        let json: json = response.into_json().unwrap();
+        // Read response body as string
+        let body_text = response.body_mut().read_to_string().unwrap();
+        let json: json = serde_json::from_str(&body_text).unwrap();
         debug!("Response: {}", json);
         let content_array = &json["content"];
 

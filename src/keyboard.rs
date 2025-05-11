@@ -5,12 +5,13 @@ use std::collections::HashMap;
 use std::{thread, time};
 
 use evdev::{
-    uinput::VirtualDevice, uinput::VirtualDeviceBuilder, AttributeSet, EventType, InputEvent, Key,
+    uinput::VirtualDevice, AttributeSet, InputEvent,
+    EventType as EvdevEventType, KeyCode as EvdevKey,
 };
 
 pub struct Keyboard {
     device: Option<VirtualDevice>,
-    key_map: HashMap<char, (Key, bool)>,
+    key_map: HashMap<char, (EvdevKey, bool)>,
     progress_count: u32,
     no_draw_progress: bool,
 }
@@ -35,68 +36,68 @@ impl Keyboard {
         debug!("Creating virtual keyboard");
         let mut keys = AttributeSet::new();
 
-        keys.insert(Key::KEY_A);
-        keys.insert(Key::KEY_B);
-        keys.insert(Key::KEY_C);
-        keys.insert(Key::KEY_D);
-        keys.insert(Key::KEY_E);
-        keys.insert(Key::KEY_F);
-        keys.insert(Key::KEY_G);
-        keys.insert(Key::KEY_H);
-        keys.insert(Key::KEY_I);
-        keys.insert(Key::KEY_J);
-        keys.insert(Key::KEY_K);
-        keys.insert(Key::KEY_L);
-        keys.insert(Key::KEY_M);
-        keys.insert(Key::KEY_N);
-        keys.insert(Key::KEY_O);
-        keys.insert(Key::KEY_P);
-        keys.insert(Key::KEY_Q);
-        keys.insert(Key::KEY_R);
-        keys.insert(Key::KEY_S);
-        keys.insert(Key::KEY_T);
-        keys.insert(Key::KEY_U);
-        keys.insert(Key::KEY_V);
-        keys.insert(Key::KEY_W);
-        keys.insert(Key::KEY_X);
-        keys.insert(Key::KEY_Y);
-        keys.insert(Key::KEY_Z);
+        keys.insert(EvdevKey::KEY_A);
+        keys.insert(EvdevKey::KEY_B);
+        keys.insert(EvdevKey::KEY_C);
+        keys.insert(EvdevKey::KEY_D);
+        keys.insert(EvdevKey::KEY_E);
+        keys.insert(EvdevKey::KEY_F);
+        keys.insert(EvdevKey::KEY_G);
+        keys.insert(EvdevKey::KEY_H);
+        keys.insert(EvdevKey::KEY_I);
+        keys.insert(EvdevKey::KEY_J);
+        keys.insert(EvdevKey::KEY_K);
+        keys.insert(EvdevKey::KEY_L);
+        keys.insert(EvdevKey::KEY_M);
+        keys.insert(EvdevKey::KEY_N);
+        keys.insert(EvdevKey::KEY_O);
+        keys.insert(EvdevKey::KEY_P);
+        keys.insert(EvdevKey::KEY_Q);
+        keys.insert(EvdevKey::KEY_R);
+        keys.insert(EvdevKey::KEY_S);
+        keys.insert(EvdevKey::KEY_T);
+        keys.insert(EvdevKey::KEY_U);
+        keys.insert(EvdevKey::KEY_V);
+        keys.insert(EvdevKey::KEY_W);
+        keys.insert(EvdevKey::KEY_X);
+        keys.insert(EvdevKey::KEY_Y);
+        keys.insert(EvdevKey::KEY_Z);
 
-        keys.insert(Key::KEY_1);
-        keys.insert(Key::KEY_2);
-        keys.insert(Key::KEY_3);
-        keys.insert(Key::KEY_4);
-        keys.insert(Key::KEY_5);
-        keys.insert(Key::KEY_6);
-        keys.insert(Key::KEY_7);
-        keys.insert(Key::KEY_8);
-        keys.insert(Key::KEY_9);
-        keys.insert(Key::KEY_0);
+        keys.insert(EvdevKey::KEY_1);
+        keys.insert(EvdevKey::KEY_2);
+        keys.insert(EvdevKey::KEY_3);
+        keys.insert(EvdevKey::KEY_4);
+        keys.insert(EvdevKey::KEY_5);
+        keys.insert(EvdevKey::KEY_6);
+        keys.insert(EvdevKey::KEY_7);
+        keys.insert(EvdevKey::KEY_8);
+        keys.insert(EvdevKey::KEY_9);
+        keys.insert(EvdevKey::KEY_0);
 
         // Add punctuation and special keys
-        keys.insert(Key::KEY_SPACE);
-        keys.insert(Key::KEY_ENTER);
-        keys.insert(Key::KEY_TAB);
-        keys.insert(Key::KEY_LEFTSHIFT);
-        keys.insert(Key::KEY_MINUS);
-        keys.insert(Key::KEY_EQUAL);
-        keys.insert(Key::KEY_LEFTBRACE);
-        keys.insert(Key::KEY_RIGHTBRACE);
-        keys.insert(Key::KEY_BACKSLASH);
-        keys.insert(Key::KEY_SEMICOLON);
-        keys.insert(Key::KEY_APOSTROPHE);
-        keys.insert(Key::KEY_GRAVE);
-        keys.insert(Key::KEY_COMMA);
-        keys.insert(Key::KEY_DOT);
-        keys.insert(Key::KEY_SLASH);
+        keys.insert(EvdevKey::KEY_SPACE);
+        keys.insert(EvdevKey::KEY_ENTER);
+        keys.insert(EvdevKey::KEY_TAB);
+        keys.insert(EvdevKey::KEY_LEFTSHIFT);
+        keys.insert(EvdevKey::KEY_MINUS);
+        keys.insert(EvdevKey::KEY_EQUAL);
+        keys.insert(EvdevKey::KEY_LEFTBRACE);
+        keys.insert(EvdevKey::KEY_RIGHTBRACE);
+        keys.insert(EvdevKey::KEY_BACKSLASH);
+        keys.insert(EvdevKey::KEY_SEMICOLON);
+        keys.insert(EvdevKey::KEY_APOSTROPHE);
+        keys.insert(EvdevKey::KEY_GRAVE);
+        keys.insert(EvdevKey::KEY_COMMA);
+        keys.insert(EvdevKey::KEY_DOT);
+        keys.insert(EvdevKey::KEY_SLASH);
 
-        keys.insert(Key::KEY_BACKSPACE);
-        keys.insert(Key::KEY_ESC);
+        keys.insert(EvdevKey::KEY_BACKSPACE);
+        keys.insert(EvdevKey::KEY_ESC);
 
-        keys.insert(Key::KEY_LEFTCTRL);
-        keys.insert(Key::KEY_LEFTALT);
+        keys.insert(EvdevKey::KEY_LEFTCTRL);
+        keys.insert(EvdevKey::KEY_LEFTALT);
 
-        VirtualDeviceBuilder::new()
+        VirtualDevice::builder()
             .unwrap()
             .name("Virtual Keyboard")
             .with_keys(&keys)
@@ -105,147 +106,147 @@ impl Keyboard {
             .unwrap()
     }
 
-    fn create_key_map() -> HashMap<char, (Key, bool)> {
+    fn create_key_map() -> HashMap<char, (EvdevKey, bool)> {
         let mut key_map = HashMap::new();
 
         // Lowercase letters
-        key_map.insert('a', (Key::KEY_A, false));
-        key_map.insert('b', (Key::KEY_B, false));
-        key_map.insert('c', (Key::KEY_C, false));
-        key_map.insert('d', (Key::KEY_D, false));
-        key_map.insert('e', (Key::KEY_E, false));
-        key_map.insert('f', (Key::KEY_F, false));
-        key_map.insert('g', (Key::KEY_G, false));
-        key_map.insert('h', (Key::KEY_H, false));
-        key_map.insert('i', (Key::KEY_I, false));
-        key_map.insert('j', (Key::KEY_J, false));
-        key_map.insert('k', (Key::KEY_K, false));
-        key_map.insert('l', (Key::KEY_L, false));
-        key_map.insert('m', (Key::KEY_M, false));
-        key_map.insert('n', (Key::KEY_N, false));
-        key_map.insert('o', (Key::KEY_O, false));
-        key_map.insert('p', (Key::KEY_P, false));
-        key_map.insert('q', (Key::KEY_Q, false));
-        key_map.insert('r', (Key::KEY_R, false));
-        key_map.insert('s', (Key::KEY_S, false));
-        key_map.insert('t', (Key::KEY_T, false));
-        key_map.insert('u', (Key::KEY_U, false));
-        key_map.insert('v', (Key::KEY_V, false));
-        key_map.insert('w', (Key::KEY_W, false));
-        key_map.insert('x', (Key::KEY_X, false));
-        key_map.insert('y', (Key::KEY_Y, false));
-        key_map.insert('z', (Key::KEY_Z, false));
+        key_map.insert('a', (EvdevKey::KEY_A, false));
+        key_map.insert('b', (EvdevKey::KEY_B, false));
+        key_map.insert('c', (EvdevKey::KEY_C, false));
+        key_map.insert('d', (EvdevKey::KEY_D, false));
+        key_map.insert('e', (EvdevKey::KEY_E, false));
+        key_map.insert('f', (EvdevKey::KEY_F, false));
+        key_map.insert('g', (EvdevKey::KEY_G, false));
+        key_map.insert('h', (EvdevKey::KEY_H, false));
+        key_map.insert('i', (EvdevKey::KEY_I, false));
+        key_map.insert('j', (EvdevKey::KEY_J, false));
+        key_map.insert('k', (EvdevKey::KEY_K, false));
+        key_map.insert('l', (EvdevKey::KEY_L, false));
+        key_map.insert('m', (EvdevKey::KEY_M, false));
+        key_map.insert('n', (EvdevKey::KEY_N, false));
+        key_map.insert('o', (EvdevKey::KEY_O, false));
+        key_map.insert('p', (EvdevKey::KEY_P, false));
+        key_map.insert('q', (EvdevKey::KEY_Q, false));
+        key_map.insert('r', (EvdevKey::KEY_R, false));
+        key_map.insert('s', (EvdevKey::KEY_S, false));
+        key_map.insert('t', (EvdevKey::KEY_T, false));
+        key_map.insert('u', (EvdevKey::KEY_U, false));
+        key_map.insert('v', (EvdevKey::KEY_V, false));
+        key_map.insert('w', (EvdevKey::KEY_W, false));
+        key_map.insert('x', (EvdevKey::KEY_X, false));
+        key_map.insert('y', (EvdevKey::KEY_Y, false));
+        key_map.insert('z', (EvdevKey::KEY_Z, false));
 
         // Uppercase letters
-        key_map.insert('A', (Key::KEY_A, true));
-        key_map.insert('B', (Key::KEY_B, true));
-        key_map.insert('C', (Key::KEY_C, true));
-        key_map.insert('D', (Key::KEY_D, true));
-        key_map.insert('E', (Key::KEY_E, true));
-        key_map.insert('F', (Key::KEY_F, true));
-        key_map.insert('G', (Key::KEY_G, true));
-        key_map.insert('H', (Key::KEY_H, true));
-        key_map.insert('I', (Key::KEY_I, true));
-        key_map.insert('J', (Key::KEY_J, true));
-        key_map.insert('K', (Key::KEY_K, true));
-        key_map.insert('L', (Key::KEY_L, true));
-        key_map.insert('M', (Key::KEY_M, true));
-        key_map.insert('N', (Key::KEY_N, true));
-        key_map.insert('O', (Key::KEY_O, true));
-        key_map.insert('P', (Key::KEY_P, true));
-        key_map.insert('Q', (Key::KEY_Q, true));
-        key_map.insert('R', (Key::KEY_R, true));
-        key_map.insert('S', (Key::KEY_S, true));
-        key_map.insert('T', (Key::KEY_T, true));
-        key_map.insert('U', (Key::KEY_U, true));
-        key_map.insert('V', (Key::KEY_V, true));
-        key_map.insert('W', (Key::KEY_W, true));
-        key_map.insert('X', (Key::KEY_X, true));
-        key_map.insert('Y', (Key::KEY_Y, true));
-        key_map.insert('Z', (Key::KEY_Z, true));
+        key_map.insert('A', (EvdevKey::KEY_A, true));
+        key_map.insert('B', (EvdevKey::KEY_B, true));
+        key_map.insert('C', (EvdevKey::KEY_C, true));
+        key_map.insert('D', (EvdevKey::KEY_D, true));
+        key_map.insert('E', (EvdevKey::KEY_E, true));
+        key_map.insert('F', (EvdevKey::KEY_F, true));
+        key_map.insert('G', (EvdevKey::KEY_G, true));
+        key_map.insert('H', (EvdevKey::KEY_H, true));
+        key_map.insert('I', (EvdevKey::KEY_I, true));
+        key_map.insert('J', (EvdevKey::KEY_J, true));
+        key_map.insert('K', (EvdevKey::KEY_K, true));
+        key_map.insert('L', (EvdevKey::KEY_L, true));
+        key_map.insert('M', (EvdevKey::KEY_M, true));
+        key_map.insert('N', (EvdevKey::KEY_N, true));
+        key_map.insert('O', (EvdevKey::KEY_O, true));
+        key_map.insert('P', (EvdevKey::KEY_P, true));
+        key_map.insert('Q', (EvdevKey::KEY_Q, true));
+        key_map.insert('R', (EvdevKey::KEY_R, true));
+        key_map.insert('S', (EvdevKey::KEY_S, true));
+        key_map.insert('T', (EvdevKey::KEY_T, true));
+        key_map.insert('U', (EvdevKey::KEY_U, true));
+        key_map.insert('V', (EvdevKey::KEY_V, true));
+        key_map.insert('W', (EvdevKey::KEY_W, true));
+        key_map.insert('X', (EvdevKey::KEY_X, true));
+        key_map.insert('Y', (EvdevKey::KEY_Y, true));
+        key_map.insert('Z', (EvdevKey::KEY_Z, true));
 
         // Numbers
-        key_map.insert('0', (Key::KEY_0, false));
-        key_map.insert('1', (Key::KEY_1, false));
-        key_map.insert('2', (Key::KEY_2, false));
-        key_map.insert('3', (Key::KEY_3, false));
-        key_map.insert('4', (Key::KEY_4, false));
-        key_map.insert('5', (Key::KEY_5, false));
-        key_map.insert('6', (Key::KEY_6, false));
-        key_map.insert('7', (Key::KEY_7, false));
-        key_map.insert('8', (Key::KEY_8, false));
-        key_map.insert('9', (Key::KEY_9, false));
+        key_map.insert('0', (EvdevKey::KEY_0, false));
+        key_map.insert('1', (EvdevKey::KEY_1, false));
+        key_map.insert('2', (EvdevKey::KEY_2, false));
+        key_map.insert('3', (EvdevKey::KEY_3, false));
+        key_map.insert('4', (EvdevKey::KEY_4, false));
+        key_map.insert('5', (EvdevKey::KEY_5, false));
+        key_map.insert('6', (EvdevKey::KEY_6, false));
+        key_map.insert('7', (EvdevKey::KEY_7, false));
+        key_map.insert('8', (EvdevKey::KEY_8, false));
+        key_map.insert('9', (EvdevKey::KEY_9, false));
 
         // Special characters
-        key_map.insert('!', (Key::KEY_1, true));
-        key_map.insert('@', (Key::KEY_2, true));
-        key_map.insert('#', (Key::KEY_3, true));
-        key_map.insert('$', (Key::KEY_4, true));
-        key_map.insert('%', (Key::KEY_5, true));
-        key_map.insert('^', (Key::KEY_6, true));
-        key_map.insert('&', (Key::KEY_7, true));
-        key_map.insert('*', (Key::KEY_8, true));
-        key_map.insert('(', (Key::KEY_9, true));
-        key_map.insert(')', (Key::KEY_0, true));
-        key_map.insert('_', (Key::KEY_MINUS, true));
-        key_map.insert('+', (Key::KEY_EQUAL, true));
-        key_map.insert('{', (Key::KEY_LEFTBRACE, true));
-        key_map.insert('}', (Key::KEY_RIGHTBRACE, true));
-        key_map.insert('|', (Key::KEY_BACKSLASH, true));
-        key_map.insert(':', (Key::KEY_SEMICOLON, true));
-        key_map.insert('"', (Key::KEY_APOSTROPHE, true));
-        key_map.insert('<', (Key::KEY_COMMA, true));
-        key_map.insert('>', (Key::KEY_DOT, true));
-        key_map.insert('?', (Key::KEY_SLASH, true));
-        key_map.insert('~', (Key::KEY_GRAVE, true));
+        key_map.insert('!', (EvdevKey::KEY_1, true));
+        key_map.insert('@', (EvdevKey::KEY_2, true));
+        key_map.insert('#', (EvdevKey::KEY_3, true));
+        key_map.insert('$', (EvdevKey::KEY_4, true));
+        key_map.insert('%', (EvdevKey::KEY_5, true));
+        key_map.insert('^', (EvdevKey::KEY_6, true));
+        key_map.insert('&', (EvdevKey::KEY_7, true));
+        key_map.insert('*', (EvdevKey::KEY_8, true));
+        key_map.insert('(', (EvdevKey::KEY_9, true));
+        key_map.insert(')', (EvdevKey::KEY_0, true));
+        key_map.insert('_', (EvdevKey::KEY_MINUS, true));
+        key_map.insert('+', (EvdevKey::KEY_EQUAL, true));
+        key_map.insert('{', (EvdevKey::KEY_LEFTBRACE, true));
+        key_map.insert('}', (EvdevKey::KEY_RIGHTBRACE, true));
+        key_map.insert('|', (EvdevKey::KEY_BACKSLASH, true));
+        key_map.insert(':', (EvdevKey::KEY_SEMICOLON, true));
+        key_map.insert('"', (EvdevKey::KEY_APOSTROPHE, true));
+        key_map.insert('<', (EvdevKey::KEY_COMMA, true));
+        key_map.insert('>', (EvdevKey::KEY_DOT, true));
+        key_map.insert('?', (EvdevKey::KEY_SLASH, true));
+        key_map.insert('~', (EvdevKey::KEY_GRAVE, true));
 
         // Common punctuation
-        key_map.insert('-', (Key::KEY_MINUS, false));
-        key_map.insert('=', (Key::KEY_EQUAL, false));
-        key_map.insert('[', (Key::KEY_LEFTBRACE, false));
-        key_map.insert(']', (Key::KEY_RIGHTBRACE, false));
-        key_map.insert('\\', (Key::KEY_BACKSLASH, false));
-        key_map.insert(';', (Key::KEY_SEMICOLON, false));
-        key_map.insert('\'', (Key::KEY_APOSTROPHE, false));
-        key_map.insert(',', (Key::KEY_COMMA, false));
-        key_map.insert('.', (Key::KEY_DOT, false));
-        key_map.insert('/', (Key::KEY_SLASH, false));
-        key_map.insert('`', (Key::KEY_GRAVE, false));
+        key_map.insert('-', (EvdevKey::KEY_MINUS, false));
+        key_map.insert('=', (EvdevKey::KEY_EQUAL, false));
+        key_map.insert('[', (EvdevKey::KEY_LEFTBRACE, false));
+        key_map.insert(']', (EvdevKey::KEY_RIGHTBRACE, false));
+        key_map.insert('\\', (EvdevKey::KEY_BACKSLASH, false));
+        key_map.insert(';', (EvdevKey::KEY_SEMICOLON, false));
+        key_map.insert('\'', (EvdevKey::KEY_APOSTROPHE, false));
+        key_map.insert(',', (EvdevKey::KEY_COMMA, false));
+        key_map.insert('.', (EvdevKey::KEY_DOT, false));
+        key_map.insert('/', (EvdevKey::KEY_SLASH, false));
+        key_map.insert('`', (EvdevKey::KEY_GRAVE, false));
 
         // Whitespace
-        key_map.insert(' ', (Key::KEY_SPACE, false));
-        key_map.insert('\t', (Key::KEY_TAB, false));
-        key_map.insert('\n', (Key::KEY_ENTER, false));
+        key_map.insert(' ', (EvdevKey::KEY_SPACE, false));
+        key_map.insert('\t', (EvdevKey::KEY_TAB, false));
+        key_map.insert('\n', (EvdevKey::KEY_ENTER, false));
 
         // Action keys, such as backspace, escape, ctrl, alt
-        key_map.insert('\x08', (Key::KEY_BACKSPACE, false));
-        key_map.insert('\x1b', (Key::KEY_ESC, false));
+        key_map.insert('\x08', (EvdevKey::KEY_BACKSPACE, false));
+        key_map.insert('\x1b', (EvdevKey::KEY_ESC, false));
 
         key_map
     }
 
-    pub fn key_down(&mut self, key: Key) -> Result<()> {
+    pub fn key_down(&mut self, key: EvdevKey) -> Result<()> {
         if let Some(device) = &mut self.device {
-            device.emit(&[(InputEvent::new(EventType::KEY, key.code(), 1))])?;
-            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            device.emit(&[(InputEvent::new(EvdevEventType::KEY.0, key.code(), 1))])?;
+            device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
             thread::sleep(time::Duration::from_millis(1));
         }
         Ok(())
     }
 
-    pub fn key_up(&mut self, key: Key) -> Result<()> {
+    pub fn key_up(&mut self, key: EvdevKey) -> Result<()> {
         if let Some(device) = &mut self.device {
-            device.emit(&[(InputEvent::new(EventType::KEY, key.code(), 0))])?;
-            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            device.emit(&[(InputEvent::new(EvdevEventType::KEY.0, key.code(), 0))])?;
+            device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
             thread::sleep(time::Duration::from_millis(1));
         }
         Ok(())
     }
 
-    pub fn string_to_keypresses(&mut self, input: &str) -> Result<(), evdev::Error> {
+    pub fn string_to_keypresses(&mut self, input: &str) -> Result<()> {
         if let Some(device) = &mut self.device {
             // make sure we are synced before we start; this might be paranoia
-            device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+            device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
             thread::sleep(time::Duration::from_millis(10));
 
             for c in input.chars() {
@@ -253,29 +254,29 @@ impl Keyboard {
                     if shift {
                         // Press Shift
                         device.emit(&[InputEvent::new(
-                            EventType::KEY,
-                            Key::KEY_LEFTSHIFT.code(),
+                            EvdevEventType::KEY.0,
+                            EvdevKey::KEY_LEFTSHIFT.code(),
                             1,
                         )])?;
                     }
 
                     // Press key
-                    device.emit(&[InputEvent::new(EventType::KEY, key.code(), 1)])?;
+                    device.emit(&[InputEvent::new(EvdevEventType::KEY.0, key.code(), 1)])?;
 
                     // Release key
-                    device.emit(&[InputEvent::new(EventType::KEY, key.code(), 0)])?;
+                    device.emit(&[InputEvent::new(EvdevEventType::KEY.0, key.code(), 0)])?;
 
                     if shift {
                         // Release Shift
                         device.emit(&[InputEvent::new(
-                            EventType::KEY,
-                            Key::KEY_LEFTSHIFT.code(),
+                            EvdevEventType::KEY.0,
+                            EvdevKey::KEY_LEFTSHIFT.code(),
                             0,
                         )])?;
                     }
 
                     // Sync event
-                    device.emit(&[InputEvent::new(EventType::SYNCHRONIZATION, 0, 0)])?;
+                    device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
                     thread::sleep(time::Duration::from_millis(10));
                 }
             }
@@ -284,15 +285,15 @@ impl Keyboard {
     }
 
     fn key_cmd(&mut self, button: &str, shift: bool) -> Result<()> {
-        self.key_down(Key::KEY_LEFTCTRL)?;
+        self.key_down(EvdevKey::KEY_LEFTCTRL)?;
         if shift {
-            self.key_down(Key::KEY_LEFTSHIFT)?;
+            self.key_down(EvdevKey::KEY_LEFTSHIFT)?;
         }
         self.string_to_keypresses(button)?;
         if shift {
-            self.key_up(Key::KEY_LEFTSHIFT)?;
+            self.key_up(EvdevKey::KEY_LEFTSHIFT)?;
         }
-        self.key_up(Key::KEY_LEFTCTRL)?;
+        self.key_up(EvdevKey::KEY_LEFTCTRL)?;
         Ok(())
     }
 
