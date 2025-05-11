@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::{thread, time};
 
 use evdev::{
-    uinput::VirtualDevice, AttributeSet, InputEvent,
-    EventType as EvdevEventType, KeyCode as EvdevKey,
+    uinput::VirtualDevice, AttributeSet, EventType as EvdevEventType, InputEvent,
+    KeyCode as EvdevKey,
 };
 
 pub struct Keyboard {

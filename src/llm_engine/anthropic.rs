@@ -96,7 +96,11 @@ impl LLMEngine for Anthropic {
     }
 
     fn execute(&mut self) -> Result<()> {
-        let mut tool_definitions = self.tools.iter().map(|tool| Self::anthropic_tool_definition(tool)).collect::<Vec<_>>();
+        let mut tool_definitions = self
+            .tools
+            .iter()
+            .map(|tool| Self::anthropic_tool_definition(tool))
+            .collect::<Vec<_>>();
 
         // Add web search tool if enabled
         if self.web_search {
@@ -180,17 +184,17 @@ impl LLMEngine for Anthropic {
                             function_name
                         ));
                     }
-                },
+                }
                 "thinking" => {
                     if let Some(thinking) = content_item.get("thinking") {
                         debug!("Thinking: {}", thinking);
                     }
-                },
+                }
                 "text" => {
                     if let Some(text) = content_item.get("text") {
                         debug!("Text: {}", text);
                     }
-                },
+                }
                 _ => {
                     debug!("Unknown content type: {}", content_type);
                 }

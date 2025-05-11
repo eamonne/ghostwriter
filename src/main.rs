@@ -171,13 +171,14 @@ fn setup_uinput() -> Result<()> {
     } else {
         info!("uinput module not found, installing bundled version");
 
-
         let os_info_path = String::from("/etc/os-release");
         if std::path::Path::new(os_info_path.as_str()).exists() {
             dotenv::from_path(os_info_path)?;
         }
 
-        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap().to_string();
+        let img_version = std::env::var("IMG_VERSION".to_string())
+            .unwrap()
+            .to_string();
 
         if img_version.is_empty() {
             return Ok(());
@@ -305,7 +306,10 @@ fn ghostwriter(args: &Args) -> Result<()> {
     if args.thinking {
         debug!("Thinking enabled with budget: {}", args.thinking_tokens);
         engine_options.insert("thinking".to_string(), "true".to_string());
-        engine_options.insert("thinking_tokens".to_string(), args.thinking_tokens.to_string());
+        engine_options.insert(
+            "thinking_tokens".to_string(),
+            args.thinking_tokens.to_string(),
+        );
     }
 
     let mut engine: Box<dyn LLMEngine> = match engine_name.as_str() {

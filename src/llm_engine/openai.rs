@@ -5,7 +5,6 @@ use log::{debug, info};
 use serde_json::json;
 use serde_json::Value as json;
 
-
 pub struct Tool {
     name: String,
     definition: json,

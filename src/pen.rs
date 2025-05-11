@@ -1,6 +1,6 @@
 use anyhow::Result;
-use evdev::{Device, InputEvent};
 use evdev::EventType as EvdevEventType;
+use evdev::{Device, InputEvent};
 use log::info;
 use std::thread::sleep;
 use std::time::Duration;
@@ -129,7 +129,7 @@ impl Pen {
                 InputEvent::new(EvdevEventType::KEY.0, 320, 1), // BTN_TOOL_PEN
                 InputEvent::new(EvdevEventType::KEY.0, 330, 1), // BTN_TOUCH
                 InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 2630), // ABS_PRESSURE (max pressure)
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 0), // ABS_DISTANCE
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 0),    // ABS_DISTANCE
                 InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
@@ -156,8 +156,8 @@ impl Pen {
     pub fn goto_xy(&mut self, (x, y): (i32, i32)) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 0, x),        // ABS_X
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 1, y),        // ABS_Y
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 0, x), // ABS_X
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 1, y), // ABS_Y
                 InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
