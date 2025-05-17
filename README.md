@@ -176,6 +176,8 @@ nohup ./ghostwriter --model gpt-4o-mini &
   * Handles the new response that shows the thinking, but doesn't send to the screen
   * ALSO added web-search for anthropic, they now do this server side!
   * Not turned on by default quite yet, but you can run `./ghostwriter --thinking --web-search` to get it all
+* **2025-05-17** -- Fix rm2
+  * Thanks to [YOUSY0US3F](https://github.com/YOUSY0US3F) for fixing the rm2 screen capture!
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
