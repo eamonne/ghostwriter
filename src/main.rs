@@ -4,15 +4,14 @@ use clap::Parser;
 use dotenv::dotenv;
 use env_logger;
 use log::{debug, info};
-use rust_embed::Embed;
 use serde_json::Value as json;
 use std::sync::{Arc, Mutex};
 
-use std::io::Write;
 use std::thread::sleep;
 use std::time::Duration;
 
 use ghostwriter::{
+    embedded_assets::load_config,
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
     pen::Pen,
@@ -26,14 +25,6 @@ use ghostwriter::{
 const VIRTUAL_WIDTH: u32 = 768;
 const VIRTUAL_HEIGHT: u32 = 1024;
 
-#[derive(Embed)]
-#[folder = "prompts/"]
-struct AssetPrompts;
-
-#[derive(Embed)]
-#[folder = "utils/"]
-#[include = "rmpp/uinput-*"]
-pub struct AssetUtils;
 
 #[derive(Parser)]
 #[command(author, version)]
@@ -131,6 +122,7 @@ struct Args {
     log_level: String,
 }
 
+
 fn main() -> Result<()> {
     dotenv().ok();
 
@@ -188,17 +180,6 @@ fn draw_svg(
     Ok(())
 }
 
-fn load_config(filename: &str) -> String {
-    debug!("Loading config from {}", filename);
-
-    if std::path::Path::new(filename).exists() {
-        std::fs::read_to_string(filename).unwrap()
-    } else {
-        std::str::from_utf8(AssetPrompts::get(filename).unwrap().data.as_ref())
-            .unwrap()
-            .to_string()
-    }
-}
 
 fn ghostwriter(args: &Args) -> Result<()> {
     let keyboard = shared!(Keyboard::new(

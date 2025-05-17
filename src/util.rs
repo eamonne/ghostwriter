@@ -10,6 +10,9 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::sync::Arc;
 
+use crate::device::DeviceModel;
+use crate::embedded_assets::get_uinput_module_data;
+
 pub type OptionMap = HashMap<String, String>;
 
 pub fn svg_to_bitmap(svg_data: &str, width: u32, height: u32) -> Result<Vec<Vec<bool>>> {
@@ -89,6 +92,16 @@ pub fn option_or_env_fallback(
 
 pub fn setup_uinput() -> Result<()> {
     debug!("Checking for uinput module");
+
+    // Use DeviceModel to detect the device type
+    let device_model = DeviceModel::detect();
+    info!("Device model detected: {}", device_model.name());
+
+    if device_model == DeviceModel::Remarkable2 {
+        info!("Device is Remarkable2, skipping uinput module check and installation");
+        return Ok(());
+    }
+
     // Check if uinput module is loaded by looking at the lsmod output
     let output = std::process::Command::new("lsmod")
         .output()
@@ -105,8 +118,7 @@ pub fn setup_uinput() -> Result<()> {
         }
 
         let img_version = std::env::var("IMG_VERSION".to_string())
-            .unwrap()
-            .to_string();
+            .unwrap_or_default();
 
         if img_version.is_empty() {
             return Ok(());
@@ -118,10 +130,12 @@ pub fn setup_uinput() -> Result<()> {
             .collect::<Vec<&str>>()
             .join(".");
 
-        let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
+        // let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
 
-        let uinput_module_asset = crate::AssetUtils::get(target_module_filename.as_str()).unwrap();
-        let raw_uinput_module_data = uinput_module_asset.data.as_ref();
+        // Use the function from embedded_assets module to get the module data
+        let uinput_module_data = get_uinput_module_data(&short_version)
+            .expect(&format!("Uinput module for version {} not found", short_version));
+        let raw_uinput_module_data = uinput_module_data.as_slice();
         let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
         uinput_module_file.write_all(raw_uinput_module_data)?;
         uinput_module_file.flush()?;
