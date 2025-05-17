@@ -12,8 +12,7 @@ pub struct AssetUtils;
 // Function to provide access to the uinput module data
 pub fn get_uinput_module_data(version: &str) -> Option<Vec<u8>> {
     let target_module_filename = format!("rmpp/uinput-{}.ko", version);
-    AssetUtils::get(target_module_filename.as_str())
-        .map(|asset| asset.data.to_vec())
+    AssetUtils::get(target_module_filename.as_str()).map(|asset| asset.data.to_vec())
 }
 
 pub fn load_config(filename: &str) -> String {

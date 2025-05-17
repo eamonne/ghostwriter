@@ -117,8 +117,7 @@ pub fn setup_uinput() -> Result<()> {
             dotenv::from_path(os_info_path)?;
         }
 
-        let img_version = std::env::var("IMG_VERSION".to_string())
-            .unwrap_or_default();
+        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap_or_default();
 
         if img_version.is_empty() {
             return Ok(());
@@ -133,8 +132,10 @@ pub fn setup_uinput() -> Result<()> {
         // let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
 
         // Use the function from embedded_assets module to get the module data
-        let uinput_module_data = get_uinput_module_data(&short_version)
-            .expect(&format!("Uinput module for version {} not found", short_version));
+        let uinput_module_data = get_uinput_module_data(&short_version).expect(&format!(
+            "Uinput module for version {} not found",
+            short_version
+        ));
         let raw_uinput_module_data = uinput_module_data.as_slice();
         let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
         uinput_module_file.write_all(raw_uinput_module_data)?;

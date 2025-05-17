@@ -25,7 +25,6 @@ use ghostwriter::{
 const VIRTUAL_WIDTH: u32 = 768;
 const VIRTUAL_HEIGHT: u32 = 1024;
 
-
 #[derive(Parser)]
 #[command(author, version)]
 #[command(about = "Vision-LLM Agent for the reMarkable2")]
@@ -122,7 +121,6 @@ struct Args {
     log_level: String,
 }
 
-
 fn main() -> Result<()> {
     dotenv().ok();
 
@@ -179,7 +177,6 @@ fn draw_svg(
     }
     Ok(())
 }
-
 
 fn ghostwriter(args: &Args) -> Result<()> {
     let keyboard = shared!(Keyboard::new(
