@@ -53,6 +53,13 @@ impl Screenshot {
         }
     }
 
+    pub fn save_raw_data(&self, raw_data: &[u8], filename: &str) -> Result<()> {
+        let mut raw_file = File::create(filename)?;
+        raw_file.write_all(raw_data)?;
+        debug!("Raw framebuffer data saved to {}", filename);
+        Ok(())
+    }
+
     pub fn take_screenshot(&mut self) -> Result<()> {
         // Find xochitl's process
         debug!("screenshot: finding pid");
@@ -65,7 +72,7 @@ impl Screenshot {
         // Read the framebuffer data
         debug!("screenshot: reading data");
         let screenshot_data = self.read_framebuffer(&pid, skip_bytes)?;
-
+        self.save_raw_data(&screenshot_data, "./capture/rawcap.raw")?;
         // Process the image data (transpose, color correction, etc.)
         debug!("screenshot: processing image");
         let processed_data = self.process_image(screenshot_data)?;
@@ -186,6 +193,7 @@ impl Screenshot {
     }
 
     fn read_framebuffer(&self, pid: &str, skip_bytes: u64) -> Result<Vec<u8>> {
+        // println!("taking screenshot \n assumed dimensions {} w x {} h", self.screen_width(), self.screen_height());
         let window_bytes =
             self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
         let mut buffer = vec![0u8; window_bytes];
@@ -249,31 +257,32 @@ impl Screenshot {
             }
         }
     }
-
     fn encode_png_rm2(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
         let raw_u8: Vec<u8> = raw_data
             .chunks_exact(2)
             .map(|chunk| u8::from_le_bytes([chunk[1]]))
             .collect();
-
         let width = self.screen_width();
         let height = self.screen_height();
-        let mut processed = vec![0u8; (width * height) as usize];
+        // let mut processed = vec![0u8; (width * height) as usize];
+        let processed: Vec<u8> = raw_u8.iter().map(|&value| Self::apply_curves(value)).collect();
 
-        for y in 0..height {
-            for x in 0..width {
-                let src_idx = (height - 1 - y) + (width - 1 - x) * height;
-                let dst_idx = y * width + x;
-                processed[dst_idx as usize] = Self::apply_curves(raw_u8[src_idx as usize]);
-            }
-        }
+        // for y in 0..height {
+        //     for x in 0..width {
+        //         let src_idx = (height - 1 - y) + (width - 1 - x) * height;
+        //         let dst_idx = y * width + x;
+        //         processed[dst_idx as usize] = Self::apply_curves(raw_u8[src_idx as usize]);
+
+        //     }
+        // }
 
         let img = GrayImage::from_raw(width, height, processed)
             .ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
-
+        let rotated_img = image::imageops::rotate270(&img);
+        let final_image =  image::imageops::flip_horizontal(&rotated_img);
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
-        encoder.write_image(img.as_raw(), width, height, image::ExtendedColorType::L8)?;
+        encoder.write_image(final_image.as_raw(), final_image.width(), final_image.height(), image::ExtendedColorType::L8)?;
 
         Ok(png_data)
     }
