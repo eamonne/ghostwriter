@@ -5,8 +5,6 @@ use log::{debug, info};
 use serde_json::json;
 use serde_json::Value as json;
 
-use ureq::Error;
-
 pub struct Tool {
     name: String,
     definition: json,
@@ -105,21 +103,20 @@ impl LLMEngine for Google {
             )
             .as_str(),
         )
-        .set("Content-Type", "application/json")
+        .header("Content-Type", "application/json")
         .send_json(&body);
 
-        let response = match raw_response {
+        let mut response = match raw_response {
             Ok(response) => response,
-            Err(Error::Status(code, response)) => {
-                info!("Error: {}", code);
-                let json: json = response.into_json()?;
-                debug!("Response: {}", json);
-                return Err(anyhow::anyhow!("API ERROR"));
+            Err(err) => {
+                info!("API Error: {}", err);
+                return Err(anyhow::anyhow!("API ERROR: {}", err));
             }
-            Err(_) => return Err(anyhow::anyhow!("OTHER API ERROR")),
         };
 
-        let json: json = response.into_json().unwrap();
+        // Read response body as string
+        let body_text = response.body_mut().read_to_string().unwrap();
+        let json: json = serde_json::from_str(&body_text).unwrap();
         debug!("Response: {}", json);
 
         let tool_calls = &json["candidates"][0]["content"]["parts"];

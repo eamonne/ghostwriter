@@ -114,6 +114,18 @@ struct Args {
     #[arg(long)]
     apply_segmentation: bool,
 
+    /// Enable web search (for Anthropic models)
+    #[arg(long)]
+    web_search: bool,
+
+    /// Enable model thinking (for Anthropic models)
+    #[arg(long)]
+    thinking: bool,
+
+    /// Set the thinking token budget (for Anthropic models)
+    #[arg(long, default_value = "5000")]
+    thinking_tokens: u32,
+
     /// Set the log level. Try 'debug' or 'trace'
     #[arg(long, default_value = "info")]
     log_level: String,
@@ -159,13 +171,14 @@ fn setup_uinput() -> Result<()> {
     } else {
         info!("uinput module not found, installing bundled version");
 
-
         let os_info_path = String::from("/etc/os-release");
         if std::path::Path::new(os_info_path.as_str()).exists() {
             dotenv::from_path(os_info_path)?;
         }
 
-        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap().to_string();
+        let img_version = std::env::var("IMG_VERSION".to_string())
+            .unwrap()
+            .to_string();
 
         if img_version.is_empty() {
             return Ok(());
@@ -256,6 +269,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     let model = args.model.clone();
     engine_options.insert("model".to_string(), model.clone());
+    debug!("Model: {}", model);
 
     let engine_name = if let Some(engine) = args.engine.clone() {
         engine.to_string()
@@ -270,15 +284,32 @@ fn ghostwriter(args: &Args) -> Result<()> {
             panic!("Unable to guess engine from model name {}", model)
         }
     };
+    debug!("Engine: {}", engine_name);
 
     if args.engine_base_url.is_some() {
+        debug!("Engine base URL: {}", args.engine_base_url.clone().unwrap());
         engine_options.insert(
             "base_url".to_string(),
             args.engine_base_url.clone().unwrap(),
         );
     }
     if args.engine_api_key.is_some() {
+        debug!("Using API key from CLI args");
         engine_options.insert("api_key".to_string(), args.engine_api_key.clone().unwrap());
+    }
+
+    if args.web_search {
+        debug!("Web search tool enabled");
+        engine_options.insert("web_search".to_string(), "true".to_string());
+    }
+
+    if args.thinking {
+        debug!("Thinking enabled with budget: {}", args.thinking_tokens);
+        engine_options.insert("thinking".to_string(), "true".to_string());
+        engine_options.insert(
+            "thinking_tokens".to_string(),
+            args.thinking_tokens.to_string(),
+        );
     }
 
     let mut engine: Box<dyn LLMEngine> = match engine_name.as_str() {

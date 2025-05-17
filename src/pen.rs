@@ -1,5 +1,6 @@
 use anyhow::Result;
-use evdev::{Device, EventType, InputEvent};
+use evdev::EventType as EvdevEventType;
+use evdev::{Device, InputEvent};
 use log::info;
 use std::thread::sleep;
 use std::time::Duration;
@@ -125,11 +126,11 @@ impl Pen {
     pub fn pen_down(&mut self) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EventType::KEY, 320, 1), // BTN_TOOL_PEN
-                InputEvent::new(EventType::KEY, 330, 1), // BTN_TOUCH
-                InputEvent::new(EventType::ABSOLUTE, 24, 2630), // ABS_PRESSURE (max pressure)
-                InputEvent::new(EventType::ABSOLUTE, 25, 0), // ABS_DISTANCE
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::KEY.0, 320, 1), // BTN_TOOL_PEN
+                InputEvent::new(EvdevEventType::KEY.0, 330, 1), // BTN_TOUCH
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 2630), // ABS_PRESSURE (max pressure)
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 0),    // ABS_DISTANCE
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
         Ok(())
@@ -138,11 +139,11 @@ impl Pen {
     pub fn pen_up(&mut self) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EventType::ABSOLUTE, 24, 0), // ABS_PRESSURE
-                InputEvent::new(EventType::ABSOLUTE, 25, 100), // ABS_DISTANCE
-                InputEvent::new(EventType::KEY, 330, 0),     // BTN_TOUCH
-                InputEvent::new(EventType::KEY, 320, 0),     // BTN_TOOL_PEN
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 0), // ABS_PRESSURE
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 100), // ABS_DISTANCE
+                InputEvent::new(EvdevEventType::KEY.0, 330, 0),     // BTN_TOUCH
+                InputEvent::new(EvdevEventType::KEY.0, 320, 0),     // BTN_TOOL_PEN
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
         Ok(())
@@ -155,9 +156,9 @@ impl Pen {
     pub fn goto_xy(&mut self, (x, y): (i32, i32)) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EventType::ABSOLUTE, 0, x),        // ABS_X
-                InputEvent::new(EventType::ABSOLUTE, 1, y),        // ABS_Y
-                InputEvent::new(EventType::SYNCHRONIZATION, 0, 0), // SYN_REPORT
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 0, x), // ABS_X
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 1, y), // ABS_Y
+                InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
         Ok(())
