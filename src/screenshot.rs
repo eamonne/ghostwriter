@@ -53,13 +53,6 @@ impl Screenshot {
         }
     }
 
-    pub fn save_raw_data(&self, raw_data: &[u8], filename: &str) -> Result<()> {
-        let mut raw_file = File::create(filename)?;
-        raw_file.write_all(raw_data)?;
-        debug!("Raw framebuffer data saved to {}", filename);
-        Ok(())
-    }
-
     pub fn take_screenshot(&mut self) -> Result<()> {
         // Find xochitl's process
         debug!("screenshot: finding pid");
@@ -72,7 +65,6 @@ impl Screenshot {
         // Read the framebuffer data
         debug!("screenshot: reading data");
         let screenshot_data = self.read_framebuffer(&pid, skip_bytes)?;
-        self.save_raw_data(&screenshot_data, "./capture/rawcap.raw")?;
         // Process the image data (transpose, color correction, etc.)
         debug!("screenshot: processing image");
         let processed_data = self.process_image(screenshot_data)?;
