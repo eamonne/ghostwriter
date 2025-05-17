@@ -4,36 +4,26 @@ use clap::Parser;
 use dotenv::dotenv;
 use env_logger;
 use log::{debug, info};
-use rust_embed::Embed;
 use serde_json::Value as json;
 use std::sync::{Arc, Mutex};
 
-use std::io::Write;
 use std::thread::sleep;
 use std::time::Duration;
 
 use ghostwriter::{
+    embedded_assets::load_config,
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
     pen::Pen,
     screenshot::Screenshot,
     segmenter::analyze_image,
     touch::Touch,
-    util::{svg_to_bitmap, write_bitmap_to_file, OptionMap},
+    util::{setup_uinput, svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
 
 // Output dimensions remain the same for both devices
 const VIRTUAL_WIDTH: u32 = 768;
 const VIRTUAL_HEIGHT: u32 = 1024;
-
-#[derive(Embed)]
-#[folder = "prompts/"]
-struct AssetPrompts;
-
-#[derive(Embed)]
-#[folder = "utils/"]
-#[include = "rmpp/uinput-*"]
-struct AssetUtils;
 
 #[derive(Parser)]
 #[command(author, version)]
@@ -159,55 +149,6 @@ macro_rules! lock {
     };
 }
 
-fn setup_uinput() -> Result<()> {
-    debug!("Checking for uinput module");
-    // Check if uinput module is loaded by looking at the lsmod output
-    let output = std::process::Command::new("lsmod")
-        .output()
-        .expect("Failed to execute lsmod");
-    let output_str = std::str::from_utf8(&output.stdout).unwrap();
-    if output_str.contains("uinput") {
-        debug!("uinput module already loaded");
-    } else {
-        info!("uinput module not found, installing bundled version");
-
-        let os_info_path = String::from("/etc/os-release");
-        if std::path::Path::new(os_info_path.as_str()).exists() {
-            dotenv::from_path(os_info_path)?;
-        }
-
-        let img_version = std::env::var("IMG_VERSION".to_string())
-            .unwrap()
-            .to_string();
-
-        if img_version.is_empty() {
-            return Ok(());
-        }
-
-        let short_version = img_version
-            .split('.')
-            .take(2)
-            .collect::<Vec<&str>>()
-            .join(".");
-
-        let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
-
-        let uinput_module_asset = AssetUtils::get(target_module_filename.as_str()).unwrap();
-        let raw_uinput_module_data = uinput_module_asset.data.as_ref();
-        let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
-        uinput_module_file.write_all(raw_uinput_module_data)?;
-        uinput_module_file.flush()?;
-        drop(uinput_module_file);
-        let output = std::process::Command::new("insmod")
-            .arg("/tmp/uinput.ko")
-            .output()?;
-        let output_str = std::str::from_utf8(&output.stderr).unwrap();
-        info!("insmod output: {}", output_str);
-    }
-
-    Ok(())
-}
-
 fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
     info!("Drawing text to the screen.");
     // keyboard.progress(".")?;
@@ -235,18 +176,6 @@ fn draw_svg(
         pen.draw_bitmap(&bitmap)?;
     }
     Ok(())
-}
-
-fn load_config(filename: &str) -> String {
-    debug!("Loading config from {}", filename);
-
-    if std::path::Path::new(filename).exists() {
-        std::fs::read_to_string(filename).unwrap()
-    } else {
-        std::str::from_utf8(AssetPrompts::get(filename).unwrap().data.as_ref())
-            .unwrap()
-            .to_string()
-    }
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {

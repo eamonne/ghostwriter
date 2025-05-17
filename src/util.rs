@@ -1,12 +1,17 @@
 use anyhow::Result;
+use dotenv;
 use image::GrayImage;
-use log::info;
+use log::{debug, info};
 use resvg::render;
 use resvg::tiny_skia::Pixmap;
 use resvg::usvg;
 use resvg::usvg::{fontdb, Options, Tree};
 use std::collections::HashMap;
+use std::io::Write;
 use std::sync::Arc;
+
+use crate::device::DeviceModel;
+use crate::embedded_assets::get_uinput_module_data;
 
 pub type OptionMap = HashMap<String, String>;
 
@@ -83,4 +88,65 @@ pub fn option_or_env_fallback(
             .unwrap_or(fallback.to_string())
             .to_string()
     }
+}
+
+pub fn setup_uinput() -> Result<()> {
+    debug!("Checking for uinput module");
+
+    // Use DeviceModel to detect the device type
+    let device_model = DeviceModel::detect();
+    info!("Device model detected: {}", device_model.name());
+
+    if device_model == DeviceModel::Remarkable2 {
+        info!("Device is Remarkable2, skipping uinput module check and installation");
+        return Ok(());
+    }
+
+    // Check if uinput module is loaded by looking at the lsmod output
+    let output = std::process::Command::new("lsmod")
+        .output()
+        .expect("Failed to execute lsmod");
+    let output_str = std::str::from_utf8(&output.stdout).unwrap();
+    if output_str.contains("uinput") {
+        debug!("uinput module already loaded");
+    } else {
+        info!("uinput module not found, installing bundled version");
+
+        let os_info_path = String::from("/etc/os-release");
+        if std::path::Path::new(os_info_path.as_str()).exists() {
+            dotenv::from_path(os_info_path)?;
+        }
+
+        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap_or_default();
+
+        if img_version.is_empty() {
+            return Ok(());
+        }
+
+        let short_version = img_version
+            .split('.')
+            .take(2)
+            .collect::<Vec<&str>>()
+            .join(".");
+
+        // let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
+
+        // Use the function from embedded_assets module to get the module data
+        let uinput_module_data = get_uinput_module_data(&short_version).expect(&format!(
+            "Uinput module for version {} not found",
+            short_version
+        ));
+        let raw_uinput_module_data = uinput_module_data.as_slice();
+        let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
+        uinput_module_file.write_all(raw_uinput_module_data)?;
+        uinput_module_file.flush()?;
+        drop(uinput_module_file);
+        let output = std::process::Command::new("insmod")
+            .arg("/tmp/uinput.ko")
+            .output()?;
+        let output_str = std::str::from_utf8(&output.stderr).unwrap();
+        info!("insmod output: {}", output_str);
+    }
+
+    Ok(())
 }
