@@ -1,3 +1,4 @@
+hello
 ## **MAIN IDEA**
 > An experiment for the remarkable2 that watches what you write and, when prompted either with a gesture or some on-screen content, can write back to the screen. This is an exploration of various interacts through this handwriting+screen medium.
 
@@ -60,7 +61,7 @@ To run in the background, start it (on the remarkable) with `nohup`:
 ```
 nohup ./ghostwriter --model gpt-4o-mini &
 ```
-
+try something new
 (TODO: figure out how to run it on boot!)
 
 ## Status / Journal
