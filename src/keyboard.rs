@@ -292,7 +292,7 @@ impl Keyboard {
                 } else {
                     // Send Unicode character using EV_MSC event with MSC_SCAN code
                     let unicode_val = c as u32;
-                    device.emit(&[InputEvent::new(EvdevEventType::MSC.0, 4, unicode_val as i32)])?;
+                    device.emit(&[InputEvent::new(EvdevEventType::MISC.0, 4, unicode_val as i32)])?;
                     device.emit(&[InputEvent::new(EvdevEventType::KEY.0, 28, 1)])?; // KEY_ENTER press to commit Unicode char
                     device.emit(&[InputEvent::new(EvdevEventType::KEY.0, 28, 0)])?; // KEY_ENTER release
                     device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
