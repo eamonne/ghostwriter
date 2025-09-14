@@ -229,37 +229,9 @@ impl Keyboard {
             key_map.insert(char, (key, shift));
         }
 
-        // Unicode character handling - map accented characters to their base letters
-        // This handles French, Spanish, German, and many other European languages
-        let unicode_mappings = [
-            // French accented characters
-            ('à', 'a'), ('â', 'a'), ('ä', 'a'), ('è', 'e'), ('é', 'e'), ('ê', 'e'), ('ë', 'e'),
-            ('î', 'i'), ('ï', 'i'), ('ô', 'o'), ('ö', 'o'), ('ù', 'u'), ('û', 'u'), ('ü', 'u'),
-            ('ÿ', 'y'), ('ç', 'c'), ('œ', 'o'), ('æ', 'a'),
-            
-            // Uppercase versions
-            ('À', 'A'), ('Â', 'A'), ('Ä', 'A'), ('È', 'E'), ('É', 'E'), ('Ê', 'E'), ('Ë', 'E'),
-            ('Î', 'I'), ('Ï', 'I'), ('Ô', 'O'), ('Ö', 'O'), ('Ù', 'U'), ('Û', 'U'), ('Ü', 'U'),
-            ('Ÿ', 'Y'), ('Ç', 'C'), ('Œ', 'O'), ('Æ', 'A'),
-            
-            // Spanish characters
-            ('ñ', 'n'), ('Ñ', 'N'), ('¿', '?'), ('¡', '!'),
-            
-            // German characters
-            ('ß', 's'), 
-            
-            // Scandinavian characters
-            ('å', 'a'), ('Å', 'A'), ('ø', 'o'), ('Ø', 'O'), ('æ', 'a'), ('Æ', 'A'),
-            
-            // Other common European characters
-            ('€', 'e'), ('£', 'l'), ('¥', 'y'),
-        ];
-
-        for (accented_char, base_char) in unicode_mappings {
-            if let Some(&(key, shift)) = key_map.get(&base_char) {
-                key_map.insert(accented_char, (key, shift));
-            }
-        }
+        // Removed unicode character handling that maps accented characters to base letters
+        // This was causing accented characters to lose their accents when typed.
+        // Instead, we will handle accented characters directly if possible.
 
         key_map
     }
@@ -315,6 +287,14 @@ impl Keyboard {
                     }
 
                     // Sync event
+                    device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
+                    thread::sleep(time::Duration::from_millis(10));
+                } else {
+                    // Send Unicode character using EV_MSC event with MSC_SCAN code
+                    let unicode_val = c as u32;
+                    device.emit(&[InputEvent::new(EvdevEventType::MSC.0, 4, unicode_val as i32)])?;
+                    device.emit(&[InputEvent::new(EvdevEventType::KEY.0, 28, 1)])?; // KEY_ENTER press to commit Unicode char
+                    device.emit(&[InputEvent::new(EvdevEventType::KEY.0, 28, 0)])?; // KEY_ENTER release
                     device.emit(&[InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0)])?;
                     thread::sleep(time::Duration::from_millis(10));
                 }
