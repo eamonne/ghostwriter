@@ -263,8 +263,23 @@ fn ghostwriter(args: &Args) -> Result<()> {
                 std::fs::write(output_file, text).unwrap();
             }
             if !no_draw {
-                // let mut keyboard = lock!(keyboard_clone);
-                draw_text(text, &mut lock!(keyboard_clone)).unwrap();
+                // Instead of draw_text, convert text to SVG and draw with draw_svg
+                let svg_data = format!(
+                    r#"<svg width='{}' height='{}' xmlns='http://www.w3.org/2000/svg'>
+                        <text x='10' y='50' font-family='Noto Sans' font-size='24' fill='black'>{}</text>
+                    </svg>"#,
+                    VIRTUAL_WIDTH,
+                    VIRTUAL_HEIGHT,
+                    text
+                        .replace('&', "&")
+                        .replace('<', "<")
+                        .replace('>', ">")
+                        .replace('\"', "\"")
+                        .replace('\'', "'")
+                );
+                let mut keyboard = lock!(keyboard_clone);
+                let mut pen = lock!(pen_clone);
+                draw_svg(&svg_data, &mut keyboard, &mut pen, save_bitmap.as_ref(), no_draw).unwrap();
             }
         }),
     );
