@@ -109,118 +109,157 @@ impl Keyboard {
     fn create_key_map() -> HashMap<char, (EvdevKey, bool)> {
         let mut key_map = HashMap::new();
 
-        // Lowercase letters
-        key_map.insert('a', (EvdevKey::KEY_A, false));
-        key_map.insert('b', (EvdevKey::KEY_B, false));
-        key_map.insert('c', (EvdevKey::KEY_C, false));
-        key_map.insert('d', (EvdevKey::KEY_D, false));
-        key_map.insert('e', (EvdevKey::KEY_E, false));
-        key_map.insert('f', (EvdevKey::KEY_F, false));
-        key_map.insert('g', (EvdevKey::KEY_G, false));
-        key_map.insert('h', (EvdevKey::KEY_H, false));
-        key_map.insert('i', (EvdevKey::KEY_I, false));
-        key_map.insert('j', (EvdevKey::KEY_J, false));
-        key_map.insert('k', (EvdevKey::KEY_K, false));
-        key_map.insert('l', (EvdevKey::KEY_L, false));
-        key_map.insert('m', (EvdevKey::KEY_M, false));
-        key_map.insert('n', (EvdevKey::KEY_N, false));
-        key_map.insert('o', (EvdevKey::KEY_O, false));
-        key_map.insert('p', (EvdevKey::KEY_P, false));
-        key_map.insert('q', (EvdevKey::KEY_Q, false));
-        key_map.insert('r', (EvdevKey::KEY_R, false));
-        key_map.insert('s', (EvdevKey::KEY_S, false));
-        key_map.insert('t', (EvdevKey::KEY_T, false));
-        key_map.insert('u', (EvdevKey::KEY_U, false));
-        key_map.insert('v', (EvdevKey::KEY_V, false));
-        key_map.insert('w', (EvdevKey::KEY_W, false));
-        key_map.insert('x', (EvdevKey::KEY_X, false));
-        key_map.insert('y', (EvdevKey::KEY_Y, false));
-        key_map.insert('z', (EvdevKey::KEY_Z, false));
+        // Basic ASCII characters
+        let basic_chars = [
+            // Lowercase letters
+            ('a', EvdevKey::KEY_A, false),
+            ('b', EvdevKey::KEY_B, false),
+            ('c', EvdevKey::KEY_C, false),
+            ('d', EvdevKey::KEY_D, false),
+            ('e', EvdevKey::KEY_E, false),
+            ('f', EvdevKey::KEY_F, false),
+            ('g', EvdevKey::KEY_G, false),
+            ('h', EvdevKey::KEY_H, false),
+            ('i', EvdevKey::KEY_I, false),
+            ('j', EvdevKey::KEY_J, false),
+            ('k', EvdevKey::KEY_K, false),
+            ('l', EvdevKey::KEY_L, false),
+            ('m', EvdevKey::KEY_M, false),
+            ('n', EvdevKey::KEY_N, false),
+            ('o', EvdevKey::KEY_O, false),
+            ('p', EvdevKey::KEY_P, false),
+            ('q', EvdevKey::KEY_Q, false),
+            ('r', EvdevKey::KEY_R, false),
+            ('s', EvdevKey::KEY_S, false),
+            ('t', EvdevKey::KEY_T, false),
+            ('u', EvdevKey::KEY_U, false),
+            ('v', EvdevKey::KEY_V, false),
+            ('w', EvdevKey::KEY_W, false),
+            ('x', EvdevKey::KEY_X, false),
+            ('y', EvdevKey::KEY_Y, false),
+            ('z', EvdevKey::KEY_Z, false),
+            
+            // Uppercase letters
+            ('A', EvdevKey::KEY_A, true),
+            ('B', EvdevKey::KEY_B, true),
+            ('C', EvdevKey::KEY_C, true),
+            ('D', EvdevKey::KEY_D, true),
+            ('E', EvdevKey::KEY_E, true),
+            ('F', EvdevKey::KEY_F, true),
+            ('G', EvdevKey::KEY_G, true),
+            ('H', EvdevKey::KEY_H, true),
+            ('I', EvdevKey::KEY_I, true),
+            ('J', EvdevKey::KEY_J, true),
+            ('K', EvdevKey::KEY_K, true),
+            ('L', EvdevKey::KEY_L, true),
+            ('M', EvdevKey::KEY_M, true),
+            ('N', EvdevKey::KEY_N, true),
+            ('O', EvdevKey::KEY_O, true),
+            ('P', EvdevKey::KEY_P, true),
+            ('Q', EvdevKey::KEY_Q, true),
+            ('R', EvdevKey::KEY_R, true),
+            ('S', EvdevKey::KEY_S, true),
+            ('T', EvdevKey::KEY_T, true),
+            ('U', EvdevKey::KEY_U, true),
+            ('V', EvdevKey::KEY_V, true),
+            ('W', EvdevKey::KEY_W, true),
+            ('X', EvdevKey::KEY_X, true),
+            ('Y', EvdevKey::KEY_Y, true),
+            ('Z', EvdevKey::KEY_Z, true),
+            
+            // Numbers
+            ('0', EvdevKey::KEY_0, false),
+            ('1', EvdevKey::KEY_1, false),
+            ('2', EvdevKey::KEY_2, false),
+            ('3', EvdevKey::KEY_3, false),
+            ('4', EvdevKey::KEY_4, false),
+            ('5', EvdevKey::KEY_5, false),
+            ('6', EvdevKey::KEY_6, false),
+            ('7', EvdevKey::KEY_7, false),
+            ('8', EvdevKey::KEY_8, false),
+            ('9', EvdevKey::KEY_9, false),
+            
+            // Special characters
+            ('!', EvdevKey::KEY_1, true),
+            ('@', EvdevKey::KEY_2, true),
+            ('#', EvdevKey::KEY_3, true),
+            ('$', EvdevKey::KEY_4, true),
+            ('%', EvdevKey::KEY_5, true),
+            ('^', EvdevKey::KEY_6, true),
+            ('&', EvdevKey::KEY_7, true),
+            ('*', EvdevKey::KEY_8, true),
+            ('(', EvdevKey::KEY_9, true),
+            (')', EvdevKey::KEY_0, true),
+            ('_', EvdevKey::KEY_MINUS, true),
+            ('+', EvdevKey::KEY_EQUAL, true),
+            ('{', EvdevKey::KEY_LEFTBRACE, true),
+            ('}', EvdevKey::KEY_RIGHTBRACE, true),
+            ('|', EvdevKey::KEY_BACKSLASH, true),
+            (':', EvdevKey::KEY_SEMICOLON, true),
+            ('"', EvdevKey::KEY_APOSTROPHE, true),
+            ('<', EvdevKey::KEY_COMMA, true),
+            ('>', EvdevKey::KEY_DOT, true),
+            ('?', EvdevKey::KEY_SLASH, true),
+            ('~', EvdevKey::KEY_GRAVE, true),
+            
+            // Common punctuation
+            ('-', EvdevKey::KEY_MINUS, false),
+            ('=', EvdevKey::KEY_EQUAL, false),
+            ('[', EvdevKey::KEY_LEFTBRACE, false),
+            (']', EvdevKey::KEY_RIGHTBRACE, false),
+            ('\\', EvdevKey::KEY_BACKSLASH, false),
+            (';', EvdevKey::KEY_SEMICOLON, false),
+            ('\'', EvdevKey::KEY_APOSTROPHE, false),
+            (',', EvdevKey::KEY_COMMA, false),
+            ('.', EvdevKey::KEY_DOT, false),
+            ('/', EvdevKey::KEY_SLASH, false),
+            ('`', EvdevKey::KEY_GRAVE, false),
+            
+            // Whitespace
+            (' ', EvdevKey::KEY_SPACE, false),
+            ('\t', EvdevKey::KEY_TAB, false),
+            ('\n', EvdevKey::KEY_ENTER, false),
+            
+            // Action keys
+            ('\x08', EvdevKey::KEY_BACKSPACE, false),
+            ('\x1b', EvdevKey::KEY_ESC, false),
+        ];
 
-        // Uppercase letters
-        key_map.insert('A', (EvdevKey::KEY_A, true));
-        key_map.insert('B', (EvdevKey::KEY_B, true));
-        key_map.insert('C', (EvdevKey::KEY_C, true));
-        key_map.insert('D', (EvdevKey::KEY_D, true));
-        key_map.insert('E', (EvdevKey::KEY_E, true));
-        key_map.insert('F', (EvdevKey::KEY_F, true));
-        key_map.insert('G', (EvdevKey::KEY_G, true));
-        key_map.insert('H', (EvdevKey::KEY_H, true));
-        key_map.insert('I', (EvdevKey::KEY_I, true));
-        key_map.insert('J', (EvdevKey::KEY_J, true));
-        key_map.insert('K', (EvdevKey::KEY_K, true));
-        key_map.insert('L', (EvdevKey::KEY_L, true));
-        key_map.insert('M', (EvdevKey::KEY_M, true));
-        key_map.insert('N', (EvdevKey::KEY_N, true));
-        key_map.insert('O', (EvdevKey::KEY_O, true));
-        key_map.insert('P', (EvdevKey::KEY_P, true));
-        key_map.insert('Q', (EvdevKey::KEY_Q, true));
-        key_map.insert('R', (EvdevKey::KEY_R, true));
-        key_map.insert('S', (EvdevKey::KEY_S, true));
-        key_map.insert('T', (EvdevKey::KEY_T, true));
-        key_map.insert('U', (EvdevKey::KEY_U, true));
-        key_map.insert('V', (EvdevKey::KEY_V, true));
-        key_map.insert('W', (EvdevKey::KEY_W, true));
-        key_map.insert('X', (EvdevKey::KEY_X, true));
-        key_map.insert('Y', (EvdevKey::KEY_Y, true));
-        key_map.insert('Z', (EvdevKey::KEY_Z, true));
+        for (char, key, shift) in basic_chars {
+            key_map.insert(char, (key, shift));
+        }
 
-        // Numbers
-        key_map.insert('0', (EvdevKey::KEY_0, false));
-        key_map.insert('1', (EvdevKey::KEY_1, false));
-        key_map.insert('2', (EvdevKey::KEY_2, false));
-        key_map.insert('3', (EvdevKey::KEY_3, false));
-        key_map.insert('4', (EvdevKey::KEY_4, false));
-        key_map.insert('5', (EvdevKey::KEY_5, false));
-        key_map.insert('6', (EvdevKey::KEY_6, false));
-        key_map.insert('7', (EvdevKey::KEY_7, false));
-        key_map.insert('8', (EvdevKey::KEY_8, false));
-        key_map.insert('9', (EvdevKey::KEY_9, false));
+        // Unicode character handling - map accented characters to their base letters
+        // This handles French, Spanish, German, and many other European languages
+        let unicode_mappings = [
+            // French accented characters
+            ('à', 'a'), ('â', 'a'), ('ä', 'a'), ('è', 'e'), ('é', 'e'), ('ê', 'e'), ('ë', 'e'),
+            ('î', 'i'), ('ï', 'i'), ('ô', 'o'), ('ö', 'o'), ('ù', 'u'), ('û', 'u'), ('ü', 'u'),
+            ('ÿ', 'y'), ('ç', 'c'), ('œ', 'o'), ('æ', 'a'),
+            
+            // Uppercase versions
+            ('À', 'A'), ('Â', 'A'), ('Ä', 'A'), ('È', 'E'), ('É', 'E'), ('Ê', 'E'), ('Ë', 'E'),
+            ('Î', 'I'), ('Ï', 'I'), ('Ô', 'O'), ('Ö', 'O'), ('Ù', 'U'), ('Û', 'U'), ('Ü', 'U'),
+            ('Ÿ', 'Y'), ('Ç', 'C'), ('Œ', 'O'), ('Æ', 'A'),
+            
+            // Spanish characters
+            ('ñ', 'n'), ('Ñ', 'N'), ('¿', '?'), ('¡', '!'),
+            
+            // German characters
+            ('ß', 's'), 
+            
+            // Scandinavian characters
+            ('å', 'a'), ('Å', 'A'), ('ø', 'o'), ('Ø', 'O'), ('æ', 'a'), ('Æ', 'A'),
+            
+            // Other common European characters
+            ('€', 'e'), ('£', 'l'), ('¥', 'y'),
+        ];
 
-        // Special characters
-        key_map.insert('!', (EvdevKey::KEY_1, true));
-        key_map.insert('@', (EvdevKey::KEY_2, true));
-        key_map.insert('#', (EvdevKey::KEY_3, true));
-        key_map.insert('$', (EvdevKey::KEY_4, true));
-        key_map.insert('%', (EvdevKey::KEY_5, true));
-        key_map.insert('^', (EvdevKey::KEY_6, true));
-        key_map.insert('&', (EvdevKey::KEY_7, true));
-        key_map.insert('*', (EvdevKey::KEY_8, true));
-        key_map.insert('(', (EvdevKey::KEY_9, true));
-        key_map.insert(')', (EvdevKey::KEY_0, true));
-        key_map.insert('_', (EvdevKey::KEY_MINUS, true));
-        key_map.insert('+', (EvdevKey::KEY_EQUAL, true));
-        key_map.insert('{', (EvdevKey::KEY_LEFTBRACE, true));
-        key_map.insert('}', (EvdevKey::KEY_RIGHTBRACE, true));
-        key_map.insert('|', (EvdevKey::KEY_BACKSLASH, true));
-        key_map.insert(':', (EvdevKey::KEY_SEMICOLON, true));
-        key_map.insert('"', (EvdevKey::KEY_APOSTROPHE, true));
-        key_map.insert('<', (EvdevKey::KEY_COMMA, true));
-        key_map.insert('>', (EvdevKey::KEY_DOT, true));
-        key_map.insert('?', (EvdevKey::KEY_SLASH, true));
-        key_map.insert('~', (EvdevKey::KEY_GRAVE, true));
-
-        // Common punctuation
-        key_map.insert('-', (EvdevKey::KEY_MINUS, false));
-        key_map.insert('=', (EvdevKey::KEY_EQUAL, false));
-        key_map.insert('[', (EvdevKey::KEY_LEFTBRACE, false));
-        key_map.insert(']', (EvdevKey::KEY_RIGHTBRACE, false));
-        key_map.insert('\\', (EvdevKey::KEY_BACKSLASH, false));
-        key_map.insert(';', (EvdevKey::KEY_SEMICOLON, false));
-        key_map.insert('\'', (EvdevKey::KEY_APOSTROPHE, false));
-        key_map.insert(',', (EvdevKey::KEY_COMMA, false));
-        key_map.insert('.', (EvdevKey::KEY_DOT, false));
-        key_map.insert('/', (EvdevKey::KEY_SLASH, false));
-        key_map.insert('`', (EvdevKey::KEY_GRAVE, false));
-
-        // Whitespace
-        key_map.insert(' ', (EvdevKey::KEY_SPACE, false));
-        key_map.insert('\t', (EvdevKey::KEY_TAB, false));
-        key_map.insert('\n', (EvdevKey::KEY_ENTER, false));
-
-        // Action keys, such as backspace, escape, ctrl, alt
-        key_map.insert('\x08', (EvdevKey::KEY_BACKSPACE, false));
-        key_map.insert('\x1b', (EvdevKey::KEY_ESC, false));
+        for (accented_char, base_char) in unicode_mappings {
+            if let Some(&(key, shift)) = key_map.get(&base_char) {
+                key_map.insert(accented_char, (key, shift));
+            }
+        }
 
         key_map
     }
