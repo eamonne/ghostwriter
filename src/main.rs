@@ -149,13 +149,22 @@ macro_rules! lock {
     };
 }
 
-fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
+fn draw_text(
+    text: &str,
+    pen: &mut Pen,
+    keyboard: &mut Keyboard,
+    save_bitmap: Option<&String>,
+    no_draw: bool,
+) -> Result<()> {
     info!("Drawing text to the screen.");
-    // keyboard.progress(".")?;
     keyboard.progress_end()?;
-    keyboard.key_cmd_body()?;
-    keyboard.string_to_keypresses(text)?;
-    // keyboard.string_to_keypresses("\n\n")?;
+    let svg = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024">
+            <text x="10" y="50" font-family="Arial" font-size="35" fill="black">{}</text>
+        </svg>"#,
+        text
+    );
+    draw_svg(&svg, keyboard, pen, save_bitmap, no_draw)?;
     Ok(())
 }
 
@@ -251,6 +260,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
     let output_file = args.output_file.clone();
     let no_draw = args.no_draw;
     let keyboard_clone = Arc::clone(&keyboard);
+    let pen_clone = Arc::clone(&pen);
 
     let tool_config_draw_text = load_config("tool_draw_text.json");
 
@@ -263,8 +273,14 @@ fn ghostwriter(args: &Args) -> Result<()> {
                 std::fs::write(output_file, text).unwrap();
             }
             if !no_draw {
-                // let mut keyboard = lock!(keyboard_clone);
-                draw_text(text, &mut lock!(keyboard_clone)).unwrap();
+                draw_text(
+                    text,
+                    &mut lock!(pen_clone),
+                    &mut lock!(keyboard_clone),
+                    None,
+                    no_draw,
+                )
+                .unwrap();
             }
         }),
     );
