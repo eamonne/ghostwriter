@@ -247,18 +247,31 @@ nohup ./ghostwriter --model gpt-4o-mini &
 
 ## Development
 
-```sh
-# Initial dependencies install (also ... rust, which I get via asdf)
-rustup target add armv7-unknown-linux-gnueabihf
-sudo apt-get install gcc-arm-linux-gnueabihf
-cargo install cross
+* [Install docker](https://docs.docker.com/engine/install/) for cross-compiling
+* Install Rust
+  * You can also follow [instructions for rustup](https://www.rust-lang.org/tools/install)
+  * Or if you want to be fancy, I prefer getting it from [asdf](https://asdf-vm.com/)
+  * Or maybe apt or brew will work?
+* Ubuntu
+  * `sudo apt-get install gcc-arm-linux-gnueabihf`
+* OSX
+  * `brew install arm-linux-gnueabihf-binutils`
+* Set up [cross-rs](https://github.com/cross-rs/cross) and targets
+  * Get it from the current git version, especially for OSX
+  * `cargo install cross --git https://github.com/cross-rs/cross`
+  * `rustup target add armv7-unknown-linux-gnueabihf aarch64-unknown-linux-gnu`
+* Then to build and scp it to your remarkable
+  * rm2
+    * `cross build --release --target=armv7-unknown-linux-gnueabihf`
+    * `scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter root@remarkable:`
+  * rmpp
+    * `cross build --release --target=aarch64-unknown-linux-gnu`
+    * `scp target/aarch64-unknown-linux-gnu/release/ghostwriter root@remarkable:`
+* I wrapped up that last bit into `build.sh`
+  * So I do either `./build.sh` to build and send to my rm2
+  * Or I do `./build.sh rmpp` to build and send to my rmpp
 
-# Then to build
-cross build --release --target=armv7-unknown-linux-gnueabihf
-
-# And deploy by scp'ing the binary over and run it on the device!
-scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter remarkable:
-```
+Meanwhile I have another terminal where I have ssh'd to the remarkable. I ctrl-C the current running ghostwriter there, then on my host laptop I run my build script, and then back on the remarkable shell I run ghostwriter again.
 
 ## Scratch Notes
 
@@ -281,11 +294,15 @@ mv tmp/* evaluations/$evaluation_name
 convert \( evaluations/$evaluation_name/input.png -colorspace RGB \) \( tmp/result.png -type truecolormatte -transparent white -fill red -colorize 100 \) -compose Over -composite tmp/merged-output.png
 ```
 
-### Building uinput
+### Building uinput for virtual keyboard input
 
-* clone repo
+To type back to the user, we plug in a virtual USB keybaord (which is treated like the keyboard on the Remarkable Folio). The rm2 works out of the box, but the rmpp does not have uinput built into the kernel and does not ship with it as a module, so we have to compile it ourselves.
+
+You don't have to do this if I have done it already!
+
+* `git clone https://github.com/reMarkable/linux-imx-rm`
 * switch to target release branch
-* extract
+* extract following directions and large git support
 * edit arch/arm64/configs/ferrari_defconfig
 * Add `CONFIG_INPUT_UINPUT=m`
 * Follow the readme to build:
@@ -297,8 +314,9 @@ make -j$(nproc)
 make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./output modules_install
 ```
 
-* copy output/lib/modules/.../kernel/drivers/input/misc/uinput.ko for loading
-
+* copy output/lib/modules/.../kernel/drivers/input/misc/uinput.ko over to utils/rmpp/uinput-VERSION.ko
+* This will be bundled and automatically loaded
+* ... so in theory as long as I do it and commit it here to this repo you won't have to
 
 ### Prompt / Tool ideas:
 * There are a few models for tools -- each tool can be re-usable and generalized or each tool could include things like extra-inputs for chain-of thought and hints for what goes into each parameter
