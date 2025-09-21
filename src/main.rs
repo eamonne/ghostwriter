@@ -64,6 +64,10 @@ struct Args {
     #[arg(long)]
     no_draw: bool,
 
+    /// Disable SVG drawing tool
+    #[arg(long)]
+    no_svg: bool,
+
     /// Disable keyboard
     #[arg(long)]
     no_keyboard: bool,
@@ -275,27 +279,29 @@ fn ghostwriter(args: &Args) -> Result<()> {
     let keyboard_clone = Arc::clone(&keyboard);
     let pen_clone = Arc::clone(&pen);
 
-    let tool_config_draw_svg = load_config("tool_draw_svg.json");
-    engine.register_tool(
-        "draw_svg",
-        serde_json::from_str::<serde_json::Value>(tool_config_draw_svg.as_str())?,
-        Box::new(move |arguments: json| {
-            let svg_data = arguments["svg"].as_str().unwrap();
-            if let Some(output_file) = &output_file {
-                std::fs::write(output_file, svg_data).unwrap();
-            }
-            let mut keyboard = lock!(keyboard_clone);
-            let mut pen = lock!(pen_clone);
-            draw_svg(
-                svg_data,
-                &mut keyboard,
-                &mut pen,
-                save_bitmap.as_ref(),
-                no_draw,
-            )
-            .unwrap();
-        }),
-    );
+    if !args.no_svg {
+        let tool_config_draw_svg = load_config("tool_draw_svg.json");
+        engine.register_tool(
+            "draw_svg",
+            serde_json::from_str::<serde_json::Value>(tool_config_draw_svg.as_str())?,
+            Box::new(move |arguments: json| {
+                let svg_data = arguments["svg"].as_str().unwrap();
+                if let Some(output_file) = &output_file {
+                    std::fs::write(output_file, svg_data).unwrap();
+                }
+                let mut keyboard = lock!(keyboard_clone);
+                let mut pen = lock!(pen_clone);
+                draw_svg(
+                    svg_data,
+                    &mut keyboard,
+                    &mut pen,
+                    save_bitmap.as_ref(),
+                    no_draw,
+                )
+                .unwrap();
+            }),
+        );
+    }
 
     lock!(keyboard).progress("Tools initialized.")?;
     sleep(Duration::from_millis(1000));
