@@ -263,13 +263,23 @@ fn ghostwriter(args: &Args) -> Result<()> {
         "draw_text",
         serde_json::from_str::<serde_json::Value>(tool_config_draw_text.as_str())?,
         Box::new(move |arguments: json| {
-            let text = arguments["text"].as_str().unwrap();
+            let text = match arguments["text"].as_str() {
+                Some(t) => t,
+                None => {
+                    log::error!("draw_text tool called without valid 'text' argument");
+                    return;
+                }
+            };
             if let Some(output_file) = &output_file {
-                std::fs::write(output_file, text).unwrap();
+                if let Err(e) = std::fs::write(output_file, text) {
+                    log::error!("Failed to write output file: {}", e);
+                }
             }
             if !no_draw {
                 // let mut keyboard = lock!(keyboard_clone);
-                draw_text(text, &mut lock!(keyboard_clone)).unwrap();
+                if let Err(e) = draw_text(text, &mut lock!(keyboard_clone)) {
+                    log::error!("Failed to draw text: {}", e);
+                }
             }
         }),
     );
@@ -286,13 +296,23 @@ fn ghostwriter(args: &Args) -> Result<()> {
             "draw_svg",
             serde_json::from_str::<serde_json::Value>(tool_config_draw_svg.as_str())?,
             Box::new(move |arguments: json| {
-                let svg_data = arguments["svg"].as_str().unwrap();
+                let svg_data = match arguments["svg"].as_str() {
+                    Some(svg) => svg,
+                    None => {
+                        log::error!("draw_svg tool called without valid 'svg' argument");
+                        return;
+                    }
+                };
                 if let Some(output_file) = &output_file {
-                    std::fs::write(output_file, svg_data).unwrap();
+                    if let Err(e) = std::fs::write(output_file, svg_data) {
+                        log::error!("Failed to write output file: {}", e);
+                    }
                 }
                 let mut keyboard = lock!(keyboard_clone);
                 let mut pen = lock!(pen_clone);
-                draw_svg(svg_data, &mut keyboard, &mut pen, save_bitmap.as_ref(), no_draw).unwrap();
+                if let Err(e) = draw_svg(svg_data, &mut keyboard, &mut pen, save_bitmap.as_ref(), no_draw) {
+                    log::error!("Failed to draw SVG: {}", e);
+                }
             }),
         );
     }
@@ -345,12 +365,15 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
         let prompt_general_raw = load_config(&args.prompt);
         let prompt_general_json = serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
-        let prompt = prompt_general_json["prompt"].as_str().unwrap();
+        let prompt = prompt_general_json["prompt"].as_str()
+            .ok_or_else(|| anyhow::anyhow!("Prompt file '{}' missing required 'prompt' field", args.prompt))?;
 
         let segmentation_description = if args.apply_segmentation {
             info!("Building image segmentation");
             lock!(keyboard).progress("segmenting...")?;
-            let input_filename = args.input_png.clone().unwrap_or(args.save_screenshot.clone().unwrap());
+            let input_filename = args.input_png.clone()
+                .or_else(|| args.save_screenshot.clone())
+                .ok_or_else(|| anyhow::anyhow!("Segmentation requires either --input-png or --save-screenshot to be specified"))?;
             match analyze_image(input_filename.as_str()) {
                 Ok(description) => description,
                 Err(e) => format!("Error analyzing image: {}", e),
