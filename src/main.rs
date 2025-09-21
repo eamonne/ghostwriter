@@ -16,7 +16,7 @@ use ghostwriter::{
     pen::Pen,
     screenshot::Screenshot,
     segmenter::analyze_image,
-    touch::Touch,
+    touch::{Touch, TriggerCorner},
     util::{setup_uinput, svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
 
@@ -122,6 +122,10 @@ struct Args {
     /// Set the log level. Try 'debug' or 'trace'
     #[arg(long, default_value = "info")]
     log_level: String,
+
+    /// Sets which corner the touch trigger listens to (UR, UL, LR, LL, upper-right, upper-left, lower-right, lower-left)
+    #[arg(long, default_value = "UR")]
+    trigger_corner: String,
 }
 
 fn main() -> Result<()> {
@@ -174,9 +178,10 @@ fn draw_svg(svg_data: &str, keyboard: &mut Keyboard, pen: &mut Pen, save_bitmap:
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
+    let trigger_corner = TriggerCorner::from_string(&args.trigger_corner)?;
     let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
     let pen = shared!(Pen::new(args.no_draw));
-    let touch = shared!(Touch::new(args.no_draw));
+    let touch = shared!(Touch::new(args.no_draw, trigger_corner));
 
     // Give time for the virtual keyboard to be plugged in
     sleep(Duration::from_millis(1000));
@@ -285,7 +290,15 @@ fn ghostwriter(args: &Args) -> Result<()> {
         if args.no_trigger {
             debug!("Skipping waiting for trigger");
         } else {
-            info!("Waiting for trigger (hand-touch in the upper-right corner)...");
+            info!(
+                "Waiting for trigger (hand-touch in the {} corner)...",
+                match TriggerCorner::from_string(&args.trigger_corner).unwrap() {
+                    TriggerCorner::UpperRight => "upper-right",
+                    TriggerCorner::UpperLeft => "upper-left",
+                    TriggerCorner::LowerRight => "lower-right",
+                    TriggerCorner::LowerLeft => "lower-left",
+                }
+            );
             lock!(touch).wait_for_trigger()?;
         }
 
