@@ -63,7 +63,40 @@ nohup ./ghostwriter --model gpt-4o-mini &
 
 (TODO: figure out how to run it on boot!)
 
+## Development
+
+I've been developing in Ubuntu, but did get it working in OSX. Generally it goes (1) install dependencies, (2) build locally but cross-compile for the reMarkable, (3) scp it over and try it out.
+
+* [Install docker](https://docs.docker.com/engine/install/) for cross-compiling
+* Install Rust
+  * You can also follow [instructions for rustup](https://www.rust-lang.org/tools/install)
+  * Or if you want to be fancy, I prefer getting it from [asdf](https://asdf-vm.com/)
+  * Or maybe apt or brew will work?
+* Ubuntu
+  * `sudo apt-get install gcc-arm-linux-gnueabihf`
+* OSX
+  * `brew install arm-linux-gnueabihf-binutils`
+* Set up [cross-rs](https://github.com/cross-rs/cross) and targets
+  * Get it from the current git version, especially for OSX
+  * `cargo install cross --git https://github.com/cross-rs/cross`
+  * `rustup target add armv7-unknown-linux-gnueabihf aarch64-unknown-linux-gnu`
+* Then to build and scp it to your remarkable
+  * rm2
+    * `cross build --release --target=armv7-unknown-linux-gnueabihf`
+    * `scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter root@remarkable:`
+  * rmpp
+    * `cross build --release --target=aarch64-unknown-linux-gnu`
+    * `scp target/aarch64-unknown-linux-gnu/release/ghostwriter root@remarkable:`
+* I wrapped up that last bit into `build.sh`
+  * So I do either `./build.sh` to build and send to my rm2
+  * Or I do `./build.sh rmpp` to build and send to my rmpp
+
+Meanwhile I have another terminal where I have ssh'd to the remarkable. I ctrl-C the current running ghostwriter there, then on my host laptop I run my build script, and then back on the remarkable shell I run ghostwriter again.
+
+When I want to do a build for others, I tag main with like `v2026.09.21-01` and that kicks off a github action that creates the latest release.
+
 ## Status / Journal
+
 * **2024-10-06** - Bootstrapping
   * Basic proof of concept works!!!
   * Drawing back on the screen doesn't work super well; it takes the SVG output from ChatGPT and rasterizes it and then tries to draw lots of individual dots on the screen. The Remarkable flips out a bit ... and when the whole screen is a giant black square it really freaks out and doesn't complete
@@ -102,7 +135,7 @@ nohup ./ghostwriter --model gpt-4o-mini &
   * Then I use that to record a sample input and output on the device
   * Then I added support to run ghostwriter on my laptop using the pre-captured input (build with `./build.sh local`)
   * Next I will build some tooling around iterating on examples given different prompts or pre-processing
-  * And then if I can get enough examples maye I'll have to make an AI judge to scale :)
+  * And then if I can get enough examples maybe I'll have to make an AI judge to scale :)
   * To help with that ... on idea is to make overlay the original input with the output but make the output a different color to make it differentiable by the judge
   * So far this technique is looking good for SVG output, but it'd be nice to somehow render keyboard output locally too. That is tricker since the keyboard input rendering is done by the reMarkable app
 * **2024-12-02** - Initial segmenter
@@ -178,6 +211,11 @@ nohup ./ghostwriter --model gpt-4o-mini &
   * Not turned on by default quite yet, but you can run `./ghostwriter --thinking --web-search` to get it all
 * **2025-05-17** -- Fix rm2
   * Thanks to [YOUSY0US3F](https://github.com/YOUSY0US3F) for fixing the rm2 screen capture!
+* 2025-09-21 -- Fix rmpp
+  * Updating after a while, I was getting some weird responses. Debugging the internal dialog showed that it wasn't getting a good screenshot
+  * Turns out that in 3.20 the screen resolution changed?! The [PR over on goRemarkableStream](https://github.com/owulveryck/goMarkableStream/issues/134) describes it and it was an easy fix
+  * Also at a user requested I added `--no-svg` to fully disable svg tool, though you can also do that in a custom prompt
+  * Thinking about custom prompts and how annoying it is to set up, I'm now contemplating a web-interface that would let you enter API keys, manage prompts, and maybe do some debugging
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
@@ -234,6 +272,7 @@ nohup ./ghostwriter --model gpt-4o-mini &
 * See if we can incorporate MCP (Model Context Protocol)
   * Maybe a proxy to a cloud hosted thing?
 * Allow non-tool-use responses to either be ignored or for regular text to be turned into keyboard (draw_text) tool
+* Integrated web interface to set up and manage configuration, maybe do some debugging
 
 ## References
 * Generally pulled resources from [Awesome reMarkable](https://github.com/reHackable/awesome-reMarkable)
@@ -244,34 +283,6 @@ nohup ./ghostwriter --model gpt-4o-mini &
 * Not quite the same, but I recently found [reMarkableAI](https://github.com/nickian/reMarkableAI) that does OCR→OpenAI→PDF→Device
 * Another reMarkable-LLM interface is [rMAI](https://github.com/StarNumber12046/rMAI). This one is a separate app (not trying to integrate in with simulated pen/keyboard input) and uses [replicate](https://replicate.com) as the model API service
 * I haven't adopted anything from it yet, but [Crazy Cow](https://github.com/machinelevel/sp425-crazy-cow) is a cool/crazy tool that turns text into pen strokes for the reMarkable1
-
-## Development
-
-* [Install docker](https://docs.docker.com/engine/install/) for cross-compiling
-* Install Rust
-  * You can also follow [instructions for rustup](https://www.rust-lang.org/tools/install)
-  * Or if you want to be fancy, I prefer getting it from [asdf](https://asdf-vm.com/)
-  * Or maybe apt or brew will work?
-* Ubuntu
-  * `sudo apt-get install gcc-arm-linux-gnueabihf`
-* OSX
-  * `brew install arm-linux-gnueabihf-binutils`
-* Set up [cross-rs](https://github.com/cross-rs/cross) and targets
-  * Get it from the current git version, especially for OSX
-  * `cargo install cross --git https://github.com/cross-rs/cross`
-  * `rustup target add armv7-unknown-linux-gnueabihf aarch64-unknown-linux-gnu`
-* Then to build and scp it to your remarkable
-  * rm2
-    * `cross build --release --target=armv7-unknown-linux-gnueabihf`
-    * `scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter root@remarkable:`
-  * rmpp
-    * `cross build --release --target=aarch64-unknown-linux-gnu`
-    * `scp target/aarch64-unknown-linux-gnu/release/ghostwriter root@remarkable:`
-* I wrapped up that last bit into `build.sh`
-  * So I do either `./build.sh` to build and send to my rm2
-  * Or I do `./build.sh rmpp` to build and send to my rmpp
-
-Meanwhile I have another terminal where I have ssh'd to the remarkable. I ctrl-C the current running ghostwriter there, then on my host laptop I run my build script, and then back on the remarkable shell I run ghostwriter again.
 
 ## Scratch Notes
 
