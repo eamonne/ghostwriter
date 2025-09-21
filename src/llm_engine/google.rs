@@ -35,8 +35,8 @@ impl Google {
 
 impl LLMEngine for Google {
     fn new(options: &OptionMap) -> Self {
-        let api_key = option_or_env(&options, "api_key", "GOOGLE_API_KEY");
-        let base_url = option_or_env_fallback(&options, "base_url", "GOOGLE_BASE_URL", "https://generativelanguage.googleapis.com");
+        let api_key = option_or_env(options, "api_key", "GOOGLE_API_KEY");
+        let base_url = option_or_env_fallback(options, "base_url", "GOOGLE_BASE_URL", "https://generativelanguage.googleapis.com");
         let model = options.get("model").unwrap().to_string();
 
         Self {
@@ -81,7 +81,7 @@ impl LLMEngine for Google {
                 "role": "user",
                 "parts": self.content
             }],
-            "tools": [{ "function_declarations": self.tools.iter().map(|tool| Self::google_tool_definition(tool)).collect::<Vec<_>>() }],
+            "tools": [{ "function_declarations": self.tools.iter().map(Self::google_tool_definition).collect::<Vec<_>>() }],
             "tool_config": {
                 "function_calling_config": {
                     "mode": "ANY"

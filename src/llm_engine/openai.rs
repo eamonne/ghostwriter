@@ -38,8 +38,8 @@ impl OpenAI {
 
 impl LLMEngine for OpenAI {
     fn new(options: &OptionMap) -> Self {
-        let api_key = option_or_env(&options, "api_key", "OPENAI_API_KEY");
-        let base_url = option_or_env_fallback(&options, "base_url", "OPENAI_BASE_URL", "https://api.openai.com");
+        let api_key = option_or_env(options, "api_key", "OPENAI_API_KEY");
+        let base_url = option_or_env_fallback(options, "base_url", "OPENAI_BASE_URL", "https://api.openai.com");
         let model = options.get("model").unwrap().to_string();
 
         Self {
@@ -86,7 +86,7 @@ impl LLMEngine for OpenAI {
                 "role": "user",
                 "content": self.content
             }],
-            "tools": self.tools.iter().map(|tool| Self::openai_tool_definition(tool)).collect::<Vec<_>>(),
+            "tools": self.tools.iter().map(Self::openai_tool_definition).collect::<Vec<_>>(),
             "tool_choice": "required",
             "parallel_tool_calls": false
         });

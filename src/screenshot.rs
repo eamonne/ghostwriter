@@ -74,7 +74,7 @@ impl Screenshot {
     fn find_xochitl_pid() -> Result<String> {
         let output = process::Command::new("pidof").arg("xochitl").output()?;
         let pids = String::from_utf8(output.stdout)?;
-        for pid in pids.split_whitespace() {
+        if let Some(pid) = pids.split_whitespace().next() {
             return Ok(pid.to_string());
             // let has_fb = process::Command::new("grep")
             //     .args(&["-C1", "/dev/fb0", &format!("/proc/{}/maps", pid)])
@@ -152,7 +152,7 @@ impl Screenshot {
 
         while length < screen_size_bytes {
             // debug!("looping while {} < {}", length, screen_size_bytes);
-            offset += (length - 2) as u64;
+            offset += length - 2;
 
             // debug!("  ... trying {}", start_address + offset + 8);
             file.seek(std::io::SeekFrom::Start(start_address + offset + 8))?;

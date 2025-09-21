@@ -72,7 +72,7 @@ impl Pen {
         Ok(())
     }
 
-    pub fn draw_bitmap(&mut self, bitmap: &Vec<Vec<bool>>) -> Result<()> {
+    pub fn draw_bitmap(&mut self, bitmap: &[Vec<bool>]) -> Result<()> {
         let mut is_pen_down = false;
         for (y, row) in bitmap.iter().enumerate() {
             for (x, &pixel) in row.iter().enumerate() {

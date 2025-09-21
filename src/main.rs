@@ -2,7 +2,6 @@ use anyhow::Result;
 use base64::prelude::*;
 use clap::Parser;
 use dotenv::dotenv;
-use env_logger;
 use log::{debug, info};
 use serde_json::Value as json;
 use std::sync::{Arc, Mutex};
@@ -195,16 +194,14 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     let engine_name = if let Some(engine) = args.engine.clone() {
         engine.to_string()
+    } else if model.starts_with("gpt") {
+        "openai".to_string()
+    } else if model.starts_with("claude") {
+        "anthropic".to_string()
+    } else if model.starts_with("gemini") {
+        "google".to_string()
     } else {
-        if model.starts_with("gpt") {
-            "openai".to_string()
-        } else if model.starts_with("claude") {
-            "anthropic".to_string()
-        } else if model.starts_with("gemini") {
-            "google".to_string()
-        } else {
-            panic!("Unable to guess engine from model name {}", model)
-        }
+        panic!("Unable to guess engine from model name {}", model)
     };
     debug!("Engine: {}", engine_name);
 

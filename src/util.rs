@@ -45,7 +45,7 @@ pub fn svg_to_bitmap(svg_data: &str, width: u32, height: u32) -> Result<Vec<Vec<
     Ok(bitmap)
 }
 
-pub fn write_bitmap_to_file(bitmap: &Vec<Vec<bool>>, filename: &str) -> Result<()> {
+pub fn write_bitmap_to_file(bitmap: &[Vec<bool>], filename: &str) -> Result<()> {
     let width = bitmap[0].len();
     let height = bitmap.len();
     let mut img = GrayImage::new(width as u32, height as u32);
@@ -63,19 +63,19 @@ pub fn write_bitmap_to_file(bitmap: &Vec<Vec<bool>>, filename: &str) -> Result<(
 
 pub fn option_or_env(options: &OptionMap, key: &str, env_key: &str) -> String {
     let option = options.get(key);
-    if option.is_some() {
-        option.unwrap().to_string()
+    if let Some(value) = option {
+        value.to_string()
     } else {
-        std::env::var(env_key.to_string()).unwrap().to_string()
+        std::env::var(env_key).unwrap().to_string()
     }
 }
 
 pub fn option_or_env_fallback(options: &OptionMap, key: &str, env_key: &str, fallback: &str) -> String {
     let option = options.get(key);
-    if option.is_some() {
-        option.unwrap().to_string()
+    if let Some(value) = option {
+        value.to_string()
     } else {
-        std::env::var(env_key.to_string()).unwrap_or(fallback.to_string()).to_string()
+        std::env::var(env_key).unwrap_or_else(|_| fallback.to_string())
     }
 }
 
@@ -104,7 +104,7 @@ pub fn setup_uinput() -> Result<()> {
             dotenv::from_path(os_info_path)?;
         }
 
-        let img_version = std::env::var("IMG_VERSION".to_string()).unwrap_or_default();
+        let img_version = std::env::var("IMG_VERSION").unwrap_or_default();
 
         if img_version.is_empty() {
             return Ok(());
@@ -115,7 +115,7 @@ pub fn setup_uinput() -> Result<()> {
         // let target_module_filename = format!("rmpp/uinput-{short_version}.ko");
 
         // Use the function from embedded_assets module to get the module data
-        let uinput_module_data = get_uinput_module_data(&short_version).expect(&format!("Uinput module for version {} not found", short_version));
+        let uinput_module_data = get_uinput_module_data(&short_version).unwrap_or_else(|| panic!("Uinput module for version {} not found", short_version));
         let raw_uinput_module_data = uinput_module_data.as_slice();
         let mut uinput_module_file = std::fs::File::create("/tmp/uinput.ko")?;
         uinput_module_file.write_all(raw_uinput_module_data)?;

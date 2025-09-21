@@ -38,11 +38,11 @@ impl Anthropic {
 
 impl LLMEngine for Anthropic {
     fn new(options: &OptionMap) -> Self {
-        let api_key = option_or_env(&options, "api_key", "ANTHROPIC_API_KEY");
-        let base_url = option_or_env_fallback(&options, "base_url", "ANTHROPIC_BASE_URL", "https://api.anthropic.com");
+        let api_key = option_or_env(options, "api_key", "ANTHROPIC_API_KEY");
+        let base_url = option_or_env_fallback(options, "base_url", "ANTHROPIC_BASE_URL", "https://api.anthropic.com");
         let model = options.get("model").unwrap().to_string();
-        let web_search = options.get("web_search").map_or(false, |v| v == "true");
-        let thinking = options.get("thinking").map_or(false, |v| v == "true");
+        let web_search = options.get("web_search").is_some_and(|v| v == "true");
+        let thinking = options.get("thinking").is_some_and(|v| v == "true");
         let thinking_tokens = options.get("thinking_tokens").and_then(|v| v.parse::<u32>().ok()).unwrap_or(5000);
 
         Self {
@@ -88,7 +88,7 @@ impl LLMEngine for Anthropic {
     }
 
     fn execute(&mut self) -> Result<()> {
-        let mut tool_definitions = self.tools.iter().map(|tool| Self::anthropic_tool_definition(tool)).collect::<Vec<_>>();
+        let mut tool_definitions = self.tools.iter().map(Self::anthropic_tool_definition).collect::<Vec<_>>();
 
         // Add web search tool if enabled
         if self.web_search {
