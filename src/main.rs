@@ -10,6 +10,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use ghostwriter::{
+    config::Config,
     embedded_assets::load_config,
     keyboard::Keyboard,
     llm_engine::{anthropic::Anthropic, google::Google, openai::OpenAI, LLMEngine},
@@ -31,7 +32,7 @@ const VIRTUAL_HEIGHT: u32 = 1024;
     long_about = "Ghostwriter is an exploration of how to interact with vision-LLM through the handwritten medium of the reMarkable2. It is a pluggable system; you can provide a custom prompt and custom 'tools' that the agent can use."
 )]
 #[command(after_help = "See https://github.com/awwaiid/ghostwriter for updates!")]
-struct Args {
+pub struct Args {
     /// Sets the engine to use (openai, anthropic);
     /// Sometimes we can guess the engine from the model name
     #[arg(long)]
@@ -209,10 +210,37 @@ fn create_engine(engine_name: &str, engine_options: &OptionMap) -> Result<Box<dy
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let trigger_corner = TriggerCorner::from_string(&args.trigger_corner)?;
-    let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
-    let pen = shared!(Pen::new(args.no_draw));
-    let touch = shared!(Touch::new(args.no_draw, trigger_corner));
+    let config = Config {
+        engine: args.engine.clone(),
+        engine_base_url: args.engine_base_url.clone(),
+        engine_api_key: args.engine_api_key.clone(),
+        model: args.model.clone(),
+        prompt: args.prompt.clone(),
+        no_submit: args.no_submit,
+        no_draw: args.no_draw,
+        no_svg: args.no_svg,
+        no_keyboard: args.no_keyboard,
+        no_draw_progress: args.no_draw_progress,
+        input_png: args.input_png.clone(),
+        output_file: args.output_file.clone(),
+        model_output_file: args.model_output_file.clone(),
+        save_screenshot: args.save_screenshot.clone(),
+        save_bitmap: args.save_bitmap.clone(),
+        no_loop: args.no_loop,
+        no_trigger: args.no_trigger,
+        apply_segmentation: args.apply_segmentation,
+        web_search: args.web_search,
+        thinking: args.thinking,
+        thinking_tokens: args.thinking_tokens,
+        log_level: args.log_level.clone(),
+        trigger_corner: args.trigger_corner.clone(),
+    };
+    config.validate()?;
+
+    let trigger_corner = TriggerCorner::from_string(&config.trigger_corner)?;
+    let keyboard = shared!(Keyboard::new(config.no_draw || config.no_keyboard, config.no_draw_progress,));
+    let pen = shared!(Pen::new(config.no_draw));
+    let touch = shared!(Touch::new(config.no_draw, trigger_corner));
 
     // Give time for the virtual keyboard to be plugged in
     sleep(Duration::from_millis(1000));
@@ -224,37 +252,37 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     let mut engine_options = OptionMap::new();
 
-    let model = args.model.clone();
+    let model = config.model.clone();
     engine_options.insert("model".to_string(), model.clone());
     debug!("Model: {}", model);
 
-    let engine_name = determine_engine_name(&args.engine, &model)?;
+    let engine_name = determine_engine_name(&config.engine, &model)?;
     debug!("Engine: {}", engine_name);
 
-    if args.engine_base_url.is_some() {
-        debug!("Engine base URL: {}", args.engine_base_url.clone().unwrap());
-        engine_options.insert("base_url".to_string(), args.engine_base_url.clone().unwrap());
+    if config.engine_base_url.is_some() {
+        debug!("Engine base URL: {}", config.engine_base_url.clone().unwrap());
+        engine_options.insert("base_url".to_string(), config.engine_base_url.clone().unwrap());
     }
-    if args.engine_api_key.is_some() {
+    if config.engine_api_key.is_some() {
         debug!("Using API key from CLI args");
-        engine_options.insert("api_key".to_string(), args.engine_api_key.clone().unwrap());
+        engine_options.insert("api_key".to_string(), config.engine_api_key.clone().unwrap());
     }
 
-    if args.web_search {
+    if config.web_search {
         debug!("Web search tool enabled");
         engine_options.insert("web_search".to_string(), "true".to_string());
     }
 
-    if args.thinking {
-        debug!("Thinking enabled with budget: {}", args.thinking_tokens);
+    if config.thinking {
+        debug!("Thinking enabled with budget: {}", config.thinking_tokens);
         engine_options.insert("thinking".to_string(), "true".to_string());
-        engine_options.insert("thinking_tokens".to_string(), args.thinking_tokens.to_string());
+        engine_options.insert("thinking_tokens".to_string(), config.thinking_tokens.to_string());
     }
 
     let mut engine = create_engine(&engine_name, &engine_options)?;
 
-    let output_file = args.output_file.clone();
-    let no_draw = args.no_draw;
+    let output_file = config.output_file.clone();
+    let no_draw = config.no_draw;
     let keyboard_clone = Arc::clone(&keyboard);
 
     let tool_config_draw_text = load_config("tool_draw_text.json");
@@ -284,13 +312,13 @@ fn ghostwriter(args: &Args) -> Result<()> {
         }),
     );
 
-    let output_file = args.output_file.clone();
-    let save_bitmap = args.save_bitmap.clone();
-    let no_draw = args.no_draw;
+    let output_file = config.output_file.clone();
+    let save_bitmap = config.save_bitmap.clone();
+    let no_draw = config.no_draw;
     let keyboard_clone = Arc::clone(&keyboard);
     let pen_clone = Arc::clone(&pen);
 
-    if !args.no_svg {
+    if !config.no_svg {
         let tool_config_draw_svg = load_config("tool_draw_svg.json");
         engine.register_tool(
             "draw_svg",
@@ -323,12 +351,12 @@ fn ghostwriter(args: &Args) -> Result<()> {
     sleep(Duration::from_millis(1000));
 
     loop {
-        if args.no_trigger {
+        if config.no_trigger {
             debug!("Skipping waiting for trigger");
         } else {
             info!(
                 "Waiting for trigger (hand-touch in the {} corner)...",
-                match TriggerCorner::from_string(&args.trigger_corner).unwrap() {
+                match TriggerCorner::from_string(&config.trigger_corner).unwrap() {
                     TriggerCorner::UpperRight => "upper-right",
                     TriggerCorner::UpperLeft => "upper-left",
                     TriggerCorner::LowerRight => "lower-right",
@@ -345,34 +373,34 @@ fn ghostwriter(args: &Args) -> Result<()> {
         // lock!(keyboard).progress("Taking screenshot...")?;
 
         info!("Getting screenshot (or loading input image)");
-        let base64_image = if let Some(input_png) = &args.input_png {
+        let base64_image = if let Some(input_png) = &config.input_png {
             BASE64_STANDARD.encode(std::fs::read(input_png)?)
         } else {
             let mut screenshot = Screenshot::new()?;
             screenshot.take_screenshot()?;
-            if let Some(save_screenshot) = &args.save_screenshot {
+            if let Some(save_screenshot) = &config.save_screenshot {
                 info!("Saving screenshot to {}", save_screenshot);
                 screenshot.save_image(save_screenshot)?;
             }
             screenshot.base64()?
         };
 
-        if args.no_submit {
+        if config.no_submit {
             info!("Image not submitted to model due to --no-submit flag");
             lock!(keyboard).progress_end()?;
             return Ok(());
         }
 
-        let prompt_general_raw = load_config(&args.prompt);
+        let prompt_general_raw = load_config(&config.prompt);
         let prompt_general_json = serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
         let prompt = prompt_general_json["prompt"].as_str()
-            .ok_or_else(|| anyhow::anyhow!("Prompt file '{}' missing required 'prompt' field", args.prompt))?;
+            .ok_or_else(|| anyhow::anyhow!("Prompt file '{}' missing required 'prompt' field", config.prompt))?;
 
-        let segmentation_description = if args.apply_segmentation {
+        let segmentation_description = if config.apply_segmentation {
             info!("Building image segmentation");
             lock!(keyboard).progress("segmenting...")?;
-            let input_filename = args.input_png.clone()
-                .or_else(|| args.save_screenshot.clone())
+            let input_filename = config.input_png.clone()
+                .or_else(|| config.save_screenshot.clone())
                 .ok_or_else(|| anyhow::anyhow!("Segmentation requires either --input-png or --save-screenshot to be specified"))?;
             match analyze_image(input_filename.as_str()) {
                 Ok(description) => description,
@@ -386,7 +414,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         engine.clear_content();
         engine.add_image_content(&base64_image);
 
-        if args.apply_segmentation {
+        if config.apply_segmentation {
             engine.add_text_content(
                format!("Here are interesting regions based on an automatic segmentation algorithm. Use them to help identify the exact location of interesting features.\n\n{}", segmentation_description).as_str()
             );
@@ -400,7 +428,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
             lock!(keyboard).progress(" model error. ")?;
         }
 
-        if args.no_loop {
+        if config.no_loop {
             break Ok(());
         }
     }
