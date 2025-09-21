@@ -44,7 +44,7 @@ chmod +x ./ghostwriter
 
 First you need to start `ghostwriter` on the reMarkable. SSH into your remarkable and run:
 ```
-# Use the defaults, including claude-3-7-sonnet
+# Use the defaults, including claude-sonnet-4-0
 ./ghostwriter
 
 # Use ChatGPT with the gpt-4o-mini model
@@ -52,6 +52,36 @@ First you need to start `ghostwriter` on the reMarkable. SSH into your remarkabl
 ```
 
 Draw some stuff on your screen, and then trigger the assistant by *touching/tapping the upper-right corner with your finger*. In the ssh session you'll see other touch-detections and there is a log of what happens while it is processing. You should see some dots drawn during processing and then a typewritten or drawn response!
+
+### CLI Options
+
+**Models & Engines:**
+* `--model MODEL` - Model to use (default: claude-sonnet-4-0)
+* `--engine ENGINE` - Engine: openai, anthropic, google (auto-detected from model)
+* `--engine-api-key KEY` - API key (or use env vars)
+* `--engine-base-url URL` - Custom API base URL
+
+**Behavior:**
+* `--prompt PROMPT` - Prompt file to use (default: general.json)
+* `--trigger-corner CORNER` - Touch trigger corner: UR, UL, LR, LL (default: UR)
+
+**Tools:**
+* `--no-svg` - Disable SVG drawing tool
+* `--no-keyboard` - Disable text output
+* `--thinking` - Enable model thinking (Anthropic)
+* `--web-search` - Enable web search (Anthropic)
+
+**Testing/Debug/Experiments:**
+* `--log-level LEVEL` - Set log level (info, debug, trace)
+* `--no-loop` - Run once and exit
+* `--input-png FILE` - Use PNG file instead of screenshot
+* `--output-file FILE` - Save output to file
+* `--save-screenshot FILE` - Save screenshot
+* `--save-bitmap FILE` - Save rendered output
+* `--no-submit` - Don't submit to model
+* `--no-draw` - Don't draw output
+* `--no-trigger` - Disable touch trigger
+* `--apply-segmentation` - Add image segmentation for spatial awareness
 
 ### Run in the background
 
@@ -211,11 +241,13 @@ When I want to do a build for others, I tag main with like `v2026.09.21-01` and 
   * Not turned on by default quite yet, but you can run `./ghostwriter --thinking --web-search` to get it all
 * **2025-05-17** -- Fix rm2
   * Thanks to [YOUSY0US3F](https://github.com/YOUSY0US3F) for fixing the rm2 screen capture!
-* 2025-09-21 -- Fix rmpp
+* **2025-09-21** -- Fix rmpp, code format, add some things
   * Updating after a while, I was getting some weird responses. Debugging the internal dialog showed that it wasn't getting a good screenshot
   * Turns out that in 3.20 the screen resolution changed?! The [PR over on goRemarkableStream](https://github.com/owulveryck/goMarkableStream/issues/134) describes it and it was an easy fix
   * Also at a user requested I added `--no-svg` to fully disable svg tool, though you can also do that in a custom prompt
   * Thinking about custom prompts and how annoying it is to set up, I'm now contemplating a web-interface that would let you enter API keys, manage prompts, and maybe do some debugging
+  * Last time I worked on this was before I started using claude-code. I'm having it do some work for me now
+  * Added `--trigger-corner LR` (and similar) to set the corner for activation
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
