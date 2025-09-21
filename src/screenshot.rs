@@ -32,7 +32,7 @@ impl Screenshot {
     fn screen_width(&self) -> u32 {
         match self.device_model {
             DeviceModel::Remarkable2 => 1872,
-            DeviceModel::RemarkablePaperPro => 1624,
+            DeviceModel::RemarkablePaperPro => 1632,
             DeviceModel::Unknown => 1872, // Default to RM2
         }
     }
