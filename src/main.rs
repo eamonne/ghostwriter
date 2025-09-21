@@ -177,6 +177,37 @@ fn draw_svg(svg_data: &str, keyboard: &mut Keyboard, pen: &mut Pen, save_bitmap:
     Ok(())
 }
 
+fn determine_engine_name(engine_arg: &Option<String>, model: &str) -> Result<String> {
+    if let Some(engine) = engine_arg {
+        return Ok(engine.clone());
+    }
+
+    if model.starts_with("gpt") {
+        Ok("openai".to_string())
+    } else if model.starts_with("claude") {
+        Ok("anthropic".to_string())
+    } else if model.starts_with("gemini") {
+        Ok("google".to_string())
+    } else {
+        Err(anyhow::anyhow!(
+            "Unable to guess engine from model name '{}'. Please specify --engine (openai, anthropic, or google)",
+            model
+        ))
+    }
+}
+
+fn create_engine(engine_name: &str, engine_options: &OptionMap) -> Result<Box<dyn LLMEngine>> {
+    match engine_name {
+        "openai" => Ok(Box::new(OpenAI::new(engine_options))),
+        "anthropic" => Ok(Box::new(Anthropic::new(engine_options))),
+        "google" => Ok(Box::new(Google::new(engine_options))),
+        _ => Err(anyhow::anyhow!(
+            "Unknown engine '{}'. Supported engines: openai, anthropic, google",
+            engine_name
+        )),
+    }
+}
+
 fn ghostwriter(args: &Args) -> Result<()> {
     let trigger_corner = TriggerCorner::from_string(&args.trigger_corner)?;
     let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
@@ -197,17 +228,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
     engine_options.insert("model".to_string(), model.clone());
     debug!("Model: {}", model);
 
-    let engine_name = if let Some(engine) = args.engine.clone() {
-        engine.to_string()
-    } else if model.starts_with("gpt") {
-        "openai".to_string()
-    } else if model.starts_with("claude") {
-        "anthropic".to_string()
-    } else if model.starts_with("gemini") {
-        "google".to_string()
-    } else {
-        panic!("Unable to guess engine from model name {}", model)
-    };
+    let engine_name = determine_engine_name(&args.engine, &model)?;
     debug!("Engine: {}", engine_name);
 
     if args.engine_base_url.is_some() {
@@ -230,12 +251,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
         engine_options.insert("thinking_tokens".to_string(), args.thinking_tokens.to_string());
     }
 
-    let mut engine: Box<dyn LLMEngine> = match engine_name.as_str() {
-        "openai" => Box::new(OpenAI::new(&engine_options)),
-        "anthropic" => Box::new(Anthropic::new(&engine_options)),
-        "google" => Box::new(Google::new(&engine_options)),
-        _ => panic!("Unknown engine {}", engine_name),
-    };
+    let mut engine = create_engine(&engine_name, &engine_options)?;
 
     let output_file = args.output_file.clone();
     let no_draw = args.no_draw;
