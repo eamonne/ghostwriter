@@ -130,11 +130,9 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or(args.log_level.as_str()),
-    )
-    .format_timestamp_millis()
-    .init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(args.log_level.as_str()))
+        .format_timestamp_millis()
+        .init();
 
     setup_uinput()?;
 
@@ -163,13 +161,7 @@ fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
     Ok(())
 }
 
-fn draw_svg(
-    svg_data: &str,
-    keyboard: &mut Keyboard,
-    pen: &mut Pen,
-    save_bitmap: Option<&String>,
-    no_draw: bool,
-) -> Result<()> {
+fn draw_svg(svg_data: &str, keyboard: &mut Keyboard, pen: &mut Pen, save_bitmap: Option<&String>, no_draw: bool) -> Result<()> {
     info!("Drawing SVG to the screen.");
     keyboard.progress_end()?;
     let bitmap = svg_to_bitmap(svg_data, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
@@ -183,10 +175,7 @@ fn draw_svg(
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let keyboard = shared!(Keyboard::new(
-        args.no_draw || args.no_keyboard,
-        args.no_draw_progress,
-    ));
+    let keyboard = shared!(Keyboard::new(args.no_draw || args.no_keyboard, args.no_draw_progress,));
     let pen = shared!(Pen::new(args.no_draw));
     let touch = shared!(Touch::new(args.no_draw));
 
@@ -221,10 +210,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
     if args.engine_base_url.is_some() {
         debug!("Engine base URL: {}", args.engine_base_url.clone().unwrap());
-        engine_options.insert(
-            "base_url".to_string(),
-            args.engine_base_url.clone().unwrap(),
-        );
+        engine_options.insert("base_url".to_string(), args.engine_base_url.clone().unwrap());
     }
     if args.engine_api_key.is_some() {
         debug!("Using API key from CLI args");
@@ -239,10 +225,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
     if args.thinking {
         debug!("Thinking enabled with budget: {}", args.thinking_tokens);
         engine_options.insert("thinking".to_string(), "true".to_string());
-        engine_options.insert(
-            "thinking_tokens".to_string(),
-            args.thinking_tokens.to_string(),
-        );
+        engine_options.insert("thinking_tokens".to_string(), args.thinking_tokens.to_string());
     }
 
     let mut engine: Box<dyn LLMEngine> = match engine_name.as_str() {
@@ -291,14 +274,7 @@ fn ghostwriter(args: &Args) -> Result<()> {
                 }
                 let mut keyboard = lock!(keyboard_clone);
                 let mut pen = lock!(pen_clone);
-                draw_svg(
-                    svg_data,
-                    &mut keyboard,
-                    &mut pen,
-                    save_bitmap.as_ref(),
-                    no_draw,
-                )
-                .unwrap();
+                draw_svg(svg_data, &mut keyboard, &mut pen, save_bitmap.as_ref(), no_draw).unwrap();
             }),
         );
     }
@@ -342,17 +318,13 @@ fn ghostwriter(args: &Args) -> Result<()> {
         }
 
         let prompt_general_raw = load_config(&args.prompt);
-        let prompt_general_json =
-            serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
+        let prompt_general_json = serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
         let prompt = prompt_general_json["prompt"].as_str().unwrap();
 
         let segmentation_description = if args.apply_segmentation {
             info!("Building image segmentation");
             lock!(keyboard).progress("segmenting...")?;
-            let input_filename = args
-                .input_png
-                .clone()
-                .unwrap_or(args.save_screenshot.clone().unwrap());
+            let input_filename = args.input_png.clone().unwrap_or(args.save_screenshot.clone().unwrap());
             match analyze_image(input_filename.as_str()) {
                 Ok(description) => description,
                 Err(e) => format!("Error analyzing image: {}", e),

@@ -36,12 +36,7 @@ impl Google {
 impl LLMEngine for Google {
     fn new(options: &OptionMap) -> Self {
         let api_key = option_or_env(&options, "api_key", "GOOGLE_API_KEY");
-        let base_url = option_or_env_fallback(
-            &options,
-            "base_url",
-            "GOOGLE_BASE_URL",
-            "https://generativelanguage.googleapis.com",
-        );
+        let base_url = option_or_env_fallback(&options, "base_url", "GOOGLE_BASE_URL", "https://generativelanguage.googleapis.com");
         let model = options.get("model").unwrap().to_string();
 
         Self {
@@ -96,15 +91,9 @@ impl LLMEngine for Google {
 
         // print body for debugging
         debug!("Request: {}", body);
-        let raw_response = ureq::post(
-            format!(
-                "{}/v1beta/models/{}:generateContent?key={}",
-                self.base_url, self.model, self.api_key
-            )
-            .as_str(),
-        )
-        .header("Content-Type", "application/json")
-        .send_json(&body);
+        let raw_response = ureq::post(format!("{}/v1beta/models/{}:generateContent?key={}", self.base_url, self.model, self.api_key).as_str())
+            .header("Content-Type", "application/json")
+            .send_json(&body);
 
         let mut response = match raw_response {
             Ok(response) => response,
@@ -124,26 +113,17 @@ impl LLMEngine for Google {
         if let Some(tool_call) = tool_calls.get(0) {
             let function_name = tool_call["functionCall"]["name"].as_str().unwrap();
             let function_input = &tool_call["functionCall"]["args"];
-            let tool = self
-                .tools
-                .iter_mut()
-                .find(|tool| tool.name == function_name);
+            let tool = self.tools.iter_mut().find(|tool| tool.name == function_name);
 
             if let Some(tool) = tool {
                 if let Some(callback) = &mut tool.callback {
                     callback(function_input.clone());
                     Ok(())
                 } else {
-                    Err(anyhow::anyhow!(
-                        "No callback registered for tool {}",
-                        function_name
-                    ))
+                    Err(anyhow::anyhow!("No callback registered for tool {}", function_name))
                 }
             } else {
-                Err(anyhow::anyhow!(
-                    "No tool registered with name {}",
-                    function_name
-                ))
+                Err(anyhow::anyhow!("No tool registered with name {}", function_name))
             }
         } else {
             Err(anyhow::anyhow!("No tool calls found in response"))

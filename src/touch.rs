@@ -39,16 +39,9 @@ impl Touch {
             DeviceModel::Unknown => "/dev/input/event2", // Default to RM2
         };
 
-        let device = if no_touch {
-            None
-        } else {
-            Some(Device::open(device_path).unwrap())
-        };
+        let device = if no_touch { None } else { Some(Device::open(device_path).unwrap()) };
 
-        Self {
-            device,
-            device_model,
-        }
+        Self { device, device_model }
     }
 
     pub fn wait_for_trigger(&mut self) -> Result<()> {
@@ -74,10 +67,7 @@ impl Touch {
                 if event.code() == ABS_MT_TRACKING_ID {
                     if event.value() == -1 {
                         let (x, y) = self.input_to_virtual((position_x, position_y));
-                        debug!(
-                            "Touch release detected at ({}, {}) normalized ({}, {})",
-                            position_x, position_y, x, y
-                        );
+                        debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
                         if x > 700 && y < 50 {
                             debug!("Touch release in target zone!");
                             return Ok(());

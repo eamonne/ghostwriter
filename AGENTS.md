@@ -46,6 +46,24 @@ cross build --release --target=aarch64-unknown-linux-gnu
 ./build.sh rmpp
 ```
 
+### Code Quality and Formatting
+```bash
+# Format code with rustfmt
+cargo fmt
+
+# Check formatting without applying changes
+cargo fmt -- --check
+
+# Run clippy linting
+cargo clippy
+
+# Run clippy with stricter warnings
+cargo clippy -- -D warnings
+
+# Check code compiles
+cargo check --all-targets --all-features
+```
+
 ### Testing and Evaluation
 ```bash
 # Run evaluation suite across multiple models and configurations

@@ -24,16 +24,10 @@ pub struct ImageAnalyzer {
 
 impl ImageAnalyzer {
     pub fn new(min_region_size: f32, max_regions: usize) -> Self {
-        Self {
-            min_region_size,
-            max_regions,
-        }
+        Self { min_region_size, max_regions }
     }
 
-    pub fn analyze_image(
-        &self,
-        image_path: &str,
-    ) -> Result<SegmentationResult, Box<dyn std::error::Error>> {
+    pub fn analyze_image(&self, image_path: &str) -> Result<SegmentationResult, Box<dyn std::error::Error>> {
         // trace!("Reading image from: {}", image_path);
 
         // Read image and convert to grayscale
@@ -45,14 +39,8 @@ impl ImageAnalyzer {
         let gray: GrayImage = image::imageops::grayscale(&img);
 
         // Simple thresholding
-        let binary = gray
-            .clone()
-            .into_raw()
-            .into_iter()
-            .map(|p| if p > 127 { 255 } else { 0 })
-            .collect::<Vec<u8>>();
-        let binary =
-            GrayImage::from_raw(width, height, binary).ok_or("Failed to create binary image")?;
+        let binary = gray.clone().into_raw().into_iter().map(|p| if p > 127 { 255 } else { 0 }).collect::<Vec<u8>>();
+        let binary = GrayImage::from_raw(width, height, binary).ok_or("Failed to create binary image")?;
 
         // Find contours
         let contours = find_contours(&binary);
@@ -74,11 +62,7 @@ impl ImageAnalyzer {
                 let width = x_max - x_min;
                 let height = y_max - y_min;
 
-                let contour_points: Vec<(u32, u32)> = contour
-                    .points
-                    .iter()
-                    .map(|p| (p.x as u32, p.y as u32))
-                    .collect();
+                let contour_points: Vec<(u32, u32)> = contour.points.iter().map(|p| (p.x as u32, p.y as u32)).collect();
 
                 regions.push(Region {
                     bounds: (x_min, y_min, width, height),
@@ -130,19 +114,12 @@ impl ImageAnalyzer {
     }
 
     // Optional: Add a method to visualize the regions
-    pub fn visualize_regions(
-        &self,
-        result: &SegmentationResult,
-    ) -> Result<RgbImage, Box<dyn std::error::Error>> {
+    pub fn visualize_regions(&self, result: &SegmentationResult) -> Result<RgbImage, Box<dyn std::error::Error>> {
         let mut output = RgbImage::new(result.image_size.0, result.image_size.1);
 
         // Draw regions in different colors
         for (i, region) in result.regions.iter().enumerate() {
-            let color = Rgb([
-                ((i * 90) % 255) as u8,
-                ((i * 140) % 255) as u8,
-                ((i * 200) % 255) as u8,
-            ]);
+            let color = Rgb([((i * 90) % 255) as u8, ((i * 140) % 255) as u8, ((i * 200) % 255) as u8]);
 
             // Draw contour
             for point in &region.contour_points {
@@ -168,14 +145,8 @@ pub fn analyze_image(image_path: &str) -> Result<String, Box<dyn std::error::Err
     let gray: GrayImage = image::imageops::grayscale(&img);
 
     // Simple thresholding
-    let binary = gray
-        .clone()
-        .into_raw()
-        .into_iter()
-        .map(|p| if p > 127 { 255 } else { 0 })
-        .collect::<Vec<u8>>();
-    let binary =
-        GrayImage::from_raw(width, height, binary).ok_or("Failed to create binary image")?;
+    let binary = gray.clone().into_raw().into_iter().map(|p| if p > 127 { 255 } else { 0 }).collect::<Vec<u8>>();
+    let binary = GrayImage::from_raw(width, height, binary).ok_or("Failed to create binary image")?;
 
     // Find contours
     let contours = find_contours(&binary);
@@ -199,11 +170,7 @@ pub fn analyze_image(image_path: &str) -> Result<String, Box<dyn std::error::Err
             let width = x_max - x_min;
             let height = y_max - y_min;
 
-            let contour_points: Vec<(u32, u32)> = contour
-                .points
-                .iter()
-                .map(|p| (p.x as u32, p.y as u32))
-                .collect();
+            let contour_points: Vec<(u32, u32)> = contour.points.iter().map(|p| (p.x as u32, p.y as u32)).collect();
 
             regions.push(Region {
                 bounds: (x_min, y_min, width, height),
