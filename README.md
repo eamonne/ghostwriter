@@ -1,5 +1,5 @@
 ## **MAIN IDEA**
-> An experiment for the remarkable2 that watches what you write and, when prompted either with a gesture or some on-screen content, can write back to the screen. This is an exploration of various interacts through this handwriting+screen medium.
+> An experiment for the reMarkable that watches what you write and, when prompted either with a gesture or some on-screen content, can write back to the screen. This is an exploration of various interactions through this handwriting+screen medium.
 
 <img src="docs/simple-chihuahua.jpg" width="300"><img src="docs/chihuahua-logo.png" width="300">
 
@@ -34,7 +34,7 @@ scp ghostwriter root@192.168.1.117:
 Then you have to ssh over and run it. Here is how to install and run (run these on the remarkable):
 
 ```sh
-# One itme -- make it executable after the initial copy
+# One time -- make it executable after the initial copy
 chmod +x ./ghostwriter
 
 ./ghostwriter --help # Get the options and see that it runs at all
@@ -373,7 +373,7 @@ make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./output modules_install
 * One intermediate state could be `thinking` where it can use the input of the tool as a place to write out thoughts, and the output of the tool is ignored
 * But overall what we're leading to here is a system where the prompts are easy to write, easy to copy/paste, easy to maintain
 * And then maybe we can have a set of evals or examples that are easy to use on top of a prompt mode
-* Increasingly, the reMarkable2 case might HAPPEN to be a specific prompt we set up in this system...
+* Increasingly, the reMarkable case might HAPPEN to be a specific prompt we set up in this system, and the rest could be extracted as a framework...
 * So the state machine could be:
 
 ```mermaid
