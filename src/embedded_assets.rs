@@ -21,8 +21,6 @@ pub fn load_config(filename: &str) -> String {
     if std::path::Path::new(filename).exists() {
         std::fs::read_to_string(filename).unwrap()
     } else {
-        std::str::from_utf8(AssetPrompts::get(filename).unwrap().data.as_ref())
-            .unwrap()
-            .to_string()
+        std::str::from_utf8(AssetPrompts::get(filename).unwrap().data.as_ref()).unwrap().to_string()
     }
 }

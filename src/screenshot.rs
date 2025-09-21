@@ -23,10 +23,7 @@ impl Screenshot {
     pub fn new() -> Result<Screenshot> {
         let device_model = DeviceModel::detect();
         info!("Screen detected device: {}", device_model.name());
-        Ok(Screenshot {
-            data: vec![],
-            device_model,
-        })
+        Ok(Screenshot { data: vec![], device_model })
     }
 
     fn screen_width(&self) -> u32 {
@@ -77,7 +74,7 @@ impl Screenshot {
     fn find_xochitl_pid() -> Result<String> {
         let output = process::Command::new("pidof").arg("xochitl").output()?;
         let pids = String::from_utf8(output.stdout)?;
-        for pid in pids.split_whitespace() {
+        if let Some(pid) = pids.split_whitespace().next() {
             return Ok(pid.to_string());
             // let has_fb = process::Command::new("grep")
             //     .args(&["-C1", "/dev/fb0", &format!("/proc/{}/maps", pid)])
@@ -101,10 +98,7 @@ impl Screenshot {
                 // Original RM2 approach
                 let output = process::Command::new("sh")
                     .arg("-c")
-                    .arg(format!(
-                        "grep -C1 '/dev/fb0' /proc/{}/maps | tail -n1 | sed 's/-.*$//'",
-                        pid
-                    ))
+                    .arg(format!("grep -C1 '/dev/fb0' /proc/{}/maps | tail -n1 | sed 's/-.*$//'", pid))
                     .output()?;
                 let address_hex = String::from_utf8(output.stdout)?.trim().to_string();
                 let address = u64::from_str_radix(&address_hex, 16)?;
@@ -142,10 +136,7 @@ impl Screenshot {
         }
 
         let end = u64::from_str_radix(start_end[1], 16)?;
-        debug!(
-            "range_field: {}\nstart_end: {}\nend: {}",
-            range_field, start_end[1], end
-        );
+        debug!("range_field: {}\nstart_end: {}\nend: {}", range_field, start_end[1], end);
         Ok(end)
     }
 
@@ -154,16 +145,14 @@ impl Screenshot {
         let mem_file_path = format!("/proc/{}/mem", pid);
         let mut file = std::fs::File::open(mem_file_path)?;
 
-        let screen_size_bytes = self.screen_width() as u64
-            * self.screen_height() as u64
-            * self.bytes_per_pixel() as u64;
+        let screen_size_bytes = self.screen_width() as u64 * self.screen_height() as u64 * self.bytes_per_pixel() as u64;
 
         let mut offset: u64 = 0;
         let mut length: u64 = 2;
 
         while length < screen_size_bytes {
             // debug!("looping while {} < {}", length, screen_size_bytes);
-            offset += (length - 2) as u64;
+            offset += length - 2;
 
             // debug!("  ... trying {}", start_address + offset + 8);
             file.seek(std::io::SeekFrom::Start(start_address + offset + 8))?;
@@ -171,10 +160,7 @@ impl Screenshot {
             file.read_exact(&mut header)?;
             debug!("  ... header: {:?}", &header);
 
-            length = (header[0] as u64)
-                | ((header[1] as u64) << 8)
-                | ((header[2] as u64) << 16)
-                | ((header[3] as u64) << 24);
+            length = (header[0] as u64) | ((header[1] as u64) << 8) | ((header[2] as u64) << 16) | ((header[3] as u64) << 24);
             debug!("  ... length: {}", length);
             if length < 2 {
                 anyhow::bail!("Invalid header length");
@@ -186,8 +172,7 @@ impl Screenshot {
 
     fn read_framebuffer(&self, pid: &str, skip_bytes: u64) -> Result<Vec<u8>> {
         // println!("taking screenshot \n assumed dimensions {} w x {} h", self.screen_width(), self.screen_height());
-        let window_bytes =
-            self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
+        let window_bytes = self.screen_width() as usize * self.screen_height() as usize * self.bytes_per_pixel();
         let mut buffer = vec![0u8; window_bytes];
         let mut file = std::fs::File::open(format!("/proc/{}/mem", pid))?;
         file.seek(std::io::SeekFrom::Start(skip_bytes))?;
@@ -203,11 +188,7 @@ impl Screenshot {
         // Resize the PNG to VIRTUAL_WIDTH x VIRTUAL_HEIGHT
         debug!("Resizing image to {}x{}", VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
         let img = image::load_from_memory(&png_data)?;
-        let resized_img = img.resize_exact(
-            VIRTUAL_WIDTH,
-            VIRTUAL_HEIGHT,
-            image::imageops::FilterType::Nearest,
-        );
+        let resized_img = img.resize_exact(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, image::imageops::FilterType::Nearest);
 
         // Encode the resized image back to PNG
         debug!("Re-encoding resized image");
@@ -250,10 +231,7 @@ impl Screenshot {
         }
     }
     fn encode_png_rm2(&self, raw_data: &[u8]) -> Result<Vec<u8>> {
-        let raw_u8: Vec<u8> = raw_data
-            .chunks_exact(2)
-            .map(|chunk| u8::from_le_bytes([chunk[1]]))
-            .collect();
+        let raw_u8: Vec<u8> = raw_data.chunks_exact(2).map(|chunk| u8::from_le_bytes([chunk[1]])).collect();
         let width = self.screen_width();
         let height = self.screen_height();
         // let mut processed = vec![0u8; (width * height) as usize];
@@ -268,10 +246,9 @@ impl Screenshot {
         //     }
         // }
 
-        let img = GrayImage::from_raw(width, height, processed)
-            .ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
+        let img = GrayImage::from_raw(width, height, processed).ok_or_else(|| anyhow::anyhow!("Failed to create image from raw data"))?;
         let rotated_img = image::imageops::rotate270(&img);
-        let final_image =  image::imageops::flip_horizontal(&rotated_img);
+        let final_image = image::imageops::flip_horizontal(&rotated_img);
         let mut png_data = Vec::new();
         let encoder = image::codecs::png::PngEncoder::new(&mut png_data);
         encoder.write_image(final_image.as_raw(), final_image.width(), final_image.height(), image::ExtendedColorType::L8)?;

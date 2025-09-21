@@ -27,16 +27,9 @@ impl Pen {
             DeviceModel::Unknown => "/dev/input/event1", // Default to RM2
         };
 
-        let device = if no_draw {
-            None
-        } else {
-            Some(Device::open(pen_input_device).unwrap())
-        };
+        let device = if no_draw { None } else { Some(Device::open(pen_input_device).unwrap()) };
 
-        Self {
-            device,
-            device_model,
-        }
+        Self { device, device_model }
     }
 
     pub fn draw_line_screen(&mut self, p1: (i32, i32), p2: (i32, i32)) -> Result<()> {
@@ -79,7 +72,7 @@ impl Pen {
         Ok(())
     }
 
-    pub fn draw_bitmap(&mut self, bitmap: &Vec<Vec<bool>>) -> Result<()> {
+    pub fn draw_bitmap(&mut self, bitmap: &[Vec<bool>]) -> Result<()> {
         let mut is_pen_down = false;
         for (y, row) in bitmap.iter().enumerate() {
             for (x, &pixel) in row.iter().enumerate() {
@@ -126,10 +119,10 @@ impl Pen {
     pub fn pen_down(&mut self) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EvdevEventType::KEY.0, 320, 1), // BTN_TOOL_PEN
-                InputEvent::new(EvdevEventType::KEY.0, 330, 1), // BTN_TOUCH
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 2630), // ABS_PRESSURE (max pressure)
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 0),    // ABS_DISTANCE
+                InputEvent::new(EvdevEventType::KEY.0, 320, 1),           // BTN_TOOL_PEN
+                InputEvent::new(EvdevEventType::KEY.0, 330, 1),           // BTN_TOUCH
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 2630),    // ABS_PRESSURE (max pressure)
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 0),       // ABS_DISTANCE
                 InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
@@ -139,10 +132,10 @@ impl Pen {
     pub fn pen_up(&mut self) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 0), // ABS_PRESSURE
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 100), // ABS_DISTANCE
-                InputEvent::new(EvdevEventType::KEY.0, 330, 0),     // BTN_TOUCH
-                InputEvent::new(EvdevEventType::KEY.0, 320, 0),     // BTN_TOOL_PEN
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 24, 0),       // ABS_PRESSURE
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 25, 100),     // ABS_DISTANCE
+                InputEvent::new(EvdevEventType::KEY.0, 330, 0),           // BTN_TOUCH
+                InputEvent::new(EvdevEventType::KEY.0, 320, 0),           // BTN_TOOL_PEN
                 InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
@@ -156,8 +149,8 @@ impl Pen {
     pub fn goto_xy(&mut self, (x, y): (i32, i32)) -> Result<()> {
         if let Some(device) = &mut self.device {
             device.send_events(&[
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 0, x), // ABS_X
-                InputEvent::new(EvdevEventType::ABSOLUTE.0, 1, y), // ABS_Y
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 0, x),        // ABS_X
+                InputEvent::new(EvdevEventType::ABSOLUTE.0, 1, y),        // ABS_Y
                 InputEvent::new(EvdevEventType::SYNCHRONIZATION.0, 0, 0), // SYN_REPORT
             ])?;
         }
