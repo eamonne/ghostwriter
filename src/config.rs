@@ -1,7 +1,10 @@
-use anyhow::Result;
-use figment::{Figment, providers::{Env, Toml, Serialized, Format}};
-use serde::{Deserialize, Serialize};
 use crate::touch::TriggerCorner;
+use anyhow::Result;
+use figment::{
+    providers::{Env, Format, Serialized, Toml},
+    Figment,
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -86,19 +89,16 @@ impl Config {
         let config_path = Self::config_path()?;
 
         log::info!("Saving config to {:?}", config_path);
-        let content = toml::to_string_pretty(self)
-            .map_err(|e| anyhow::anyhow!("Failed to serialize config: {}", e))?;
+        let content = toml::to_string_pretty(self).map_err(|e| anyhow::anyhow!("Failed to serialize config: {}", e))?;
 
-        std::fs::write(&config_path, content)
-            .map_err(|e| anyhow::anyhow!("Failed to write config file {:?}: {}", config_path, e))?;
+        std::fs::write(&config_path, content).map_err(|e| anyhow::anyhow!("Failed to write config file {:?}: {}", config_path, e))?;
 
         Ok(())
     }
 
     /// Get the config file path: ~/.ghostwriter.toml
     pub fn config_path() -> Result<std::path::PathBuf> {
-        let home = std::env::var("HOME")
-            .map_err(|_| anyhow::anyhow!("HOME environment variable not set"))?;
+        let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!("HOME environment variable not set"))?;
         Ok(std::path::Path::new(&home).join(".ghostwriter.toml"))
     }
 
@@ -109,7 +109,7 @@ impl Config {
 
         // Validate log level
         match self.log_level.as_str() {
-            "error" | "warn" | "info" | "debug" | "trace" => {},
+            "error" | "warn" | "info" | "debug" | "trace" => {}
             _ => return Err(anyhow::anyhow!("Invalid log level: {}", self.log_level)),
         }
 

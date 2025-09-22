@@ -380,13 +380,16 @@ fn ghostwriter(args: &Args) -> Result<()> {
 
         let prompt_general_raw = load_config(&config.prompt);
         let prompt_general_json = serde_json::from_str::<serde_json::Value>(prompt_general_raw.as_str())?;
-        let prompt = prompt_general_json["prompt"].as_str()
+        let prompt = prompt_general_json["prompt"]
+            .as_str()
             .ok_or_else(|| anyhow::anyhow!("Prompt file '{}' missing required 'prompt' field", config.prompt))?;
 
         let segmentation_description = if config.apply_segmentation {
             info!("Building image segmentation");
             lock!(keyboard).progress("segmenting...")?;
-            let input_filename = config.input_png.clone()
+            let input_filename = config
+                .input_png
+                .clone()
                 .or_else(|| config.save_screenshot.clone())
                 .ok_or_else(|| anyhow::anyhow!("Segmentation requires either --input-png or --save-screenshot to be specified"))?;
             match analyze_image(input_filename.as_str()) {
