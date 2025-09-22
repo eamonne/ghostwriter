@@ -3,6 +3,7 @@ use base64::prelude::*;
 use clap::Parser;
 use dotenv::dotenv;
 use log::{debug, info};
+use serde::Serialize;
 use serde_json::Value as json;
 use std::sync::{Arc, Mutex};
 
@@ -25,7 +26,7 @@ use ghostwriter::{
 const VIRTUAL_WIDTH: u32 = 768;
 const VIRTUAL_HEIGHT: u32 = 1024;
 
-#[derive(Parser)]
+#[derive(Parser, Serialize)]
 #[command(author, version)]
 #[command(about = "Vision-LLM Agent for the reMarkable2")]
 #[command(
@@ -127,6 +128,10 @@ pub struct Args {
     /// Sets which corner the touch trigger listens to (UR, UL, LR, LL, upper-right, upper-left, lower-right, lower-left)
     #[arg(long, default_value = "UR")]
     trigger_corner: String,
+
+    /// Save current configuration to ~/.ghostwriter.toml and exit
+    #[arg(long)]
+    save_config: bool,
 }
 
 fn main() -> Result<()> {
@@ -210,32 +215,14 @@ fn create_engine(engine_name: &str, engine_options: &OptionMap) -> Result<Box<dy
 }
 
 fn ghostwriter(args: &Args) -> Result<()> {
-    let config = Config {
-        engine: args.engine.clone(),
-        engine_base_url: args.engine_base_url.clone(),
-        engine_api_key: args.engine_api_key.clone(),
-        model: args.model.clone(),
-        prompt: args.prompt.clone(),
-        no_submit: args.no_submit,
-        no_draw: args.no_draw,
-        no_svg: args.no_svg,
-        no_keyboard: args.no_keyboard,
-        no_draw_progress: args.no_draw_progress,
-        input_png: args.input_png.clone(),
-        output_file: args.output_file.clone(),
-        model_output_file: args.model_output_file.clone(),
-        save_screenshot: args.save_screenshot.clone(),
-        save_bitmap: args.save_bitmap.clone(),
-        no_loop: args.no_loop,
-        no_trigger: args.no_trigger,
-        apply_segmentation: args.apply_segmentation,
-        web_search: args.web_search,
-        thinking: args.thinking,
-        thinking_tokens: args.thinking_tokens,
-        log_level: args.log_level.clone(),
-        trigger_corner: args.trigger_corner.clone(),
-    };
-    config.validate()?;
+    let config = Config::load(args)?;
+
+    // Handle --save-config option
+    if args.save_config {
+        config.save()?;
+        println!("Configuration saved to {:?}", Config::config_path()?);
+        return Ok(());
+    }
 
     let trigger_corner = TriggerCorner::from_string(&config.trigger_corner)?;
     let keyboard = shared!(Keyboard::new(config.no_draw || config.no_keyboard, config.no_draw_progress,));

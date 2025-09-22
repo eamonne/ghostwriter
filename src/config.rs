@@ -1,4 +1,5 @@
 use anyhow::Result;
+use figment::{Figment, providers::{Env, Toml, Serialized, Format}};
 use serde::{Deserialize, Serialize};
 use crate::touch::TriggerCorner;
 
@@ -61,6 +62,46 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Load configuration using figment (file -> env -> CLI precedence)
+    pub fn load<T: Serialize>(args: &T) -> Result<Self> {
+        let config: Self = Figment::new()
+            // Start with built-in defaults
+            .merge(Serialized::defaults(Config::default()))
+            // Then layer in TOML config file (if it exists)
+            .merge(Toml::file(Self::config_path()?))
+            // Then environment variables (GHOSTWRITER_MODEL, etc.)
+            .merge(Env::prefixed("GHOSTWRITER_"))
+            // Finally CLI arguments (highest precedence)
+            .merge(Serialized::globals(args))
+            .extract()
+            .map_err(|e| anyhow::anyhow!("Configuration error: {}", e))?;
+
+        // Validate the final configuration
+        config.validate()?;
+        Ok(config)
+    }
+
+    /// Save current configuration to TOML file
+    pub fn save(&self) -> Result<()> {
+        let config_path = Self::config_path()?;
+
+        log::info!("Saving config to {:?}", config_path);
+        let content = toml::to_string_pretty(self)
+            .map_err(|e| anyhow::anyhow!("Failed to serialize config: {}", e))?;
+
+        std::fs::write(&config_path, content)
+            .map_err(|e| anyhow::anyhow!("Failed to write config file {:?}: {}", config_path, e))?;
+
+        Ok(())
+    }
+
+    /// Get the config file path: ~/.ghostwriter.toml
+    pub fn config_path() -> Result<std::path::PathBuf> {
+        let home = std::env::var("HOME")
+            .map_err(|_| anyhow::anyhow!("HOME environment variable not set"))?;
+        Ok(std::path::Path::new(&home).join(".ghostwriter.toml"))
+    }
+
     /// Validate the configuration and return any errors
     pub fn validate(&self) -> Result<()> {
         // Validate trigger corner
@@ -79,5 +120,4 @@ impl Config {
 
         Ok(())
     }
-
 }
