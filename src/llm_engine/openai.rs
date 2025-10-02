@@ -38,13 +38,8 @@ impl OpenAI {
 
 impl LLMEngine for OpenAI {
     fn new(options: &OptionMap) -> Self {
-        let api_key = option_or_env(&options, "api_key", "OPENAI_API_KEY");
-        let base_url = option_or_env_fallback(
-            &options,
-            "base_url",
-            "OPENAI_BASE_URL",
-            "https://api.openai.com",
-        );
+        let api_key = option_or_env(options, "api_key", "OPENAI_API_KEY");
+        let base_url = option_or_env_fallback(options, "base_url", "OPENAI_BASE_URL", "https://api.openai.com");
         let model = options.get("model").unwrap().to_string();
 
         Self {
@@ -91,7 +86,7 @@ impl LLMEngine for OpenAI {
                 "role": "user",
                 "content": self.content
             }],
-            "tools": self.tools.iter().map(|tool| Self::openai_tool_definition(tool)).collect::<Vec<_>>(),
+            "tools": self.tools.iter().map(Self::openai_tool_definition).collect::<Vec<_>>(),
             "tool_choice": "required",
             "parallel_tool_calls": false
         });
@@ -122,26 +117,17 @@ impl LLMEngine for OpenAI {
             let function_name = tool_call["function"]["name"].as_str().unwrap();
             let function_input_raw = tool_call["function"]["arguments"].as_str().unwrap();
             let function_input = serde_json::from_str::<json>(function_input_raw).unwrap();
-            let tool = self
-                .tools
-                .iter_mut()
-                .find(|tool| tool.name == function_name);
+            let tool = self.tools.iter_mut().find(|tool| tool.name == function_name);
 
             if let Some(tool) = tool {
                 if let Some(callback) = &mut tool.callback {
                     callback(function_input.clone());
                     Ok(())
                 } else {
-                    Err(anyhow::anyhow!(
-                        "No callback registered for tool {}",
-                        function_name
-                    ))
+                    Err(anyhow::anyhow!("No callback registered for tool {}", function_name))
                 }
             } else {
-                Err(anyhow::anyhow!(
-                    "No tool registered with name {}",
-                    function_name
-                ))
+                Err(anyhow::anyhow!("No tool registered with name {}", function_name))
             }
         } else {
             Err(anyhow::anyhow!("No tool calls found in response"))

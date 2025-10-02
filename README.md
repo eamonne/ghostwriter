@@ -1,6 +1,6 @@
 hello
 ## **MAIN IDEA**
-> An experiment for the remarkable2 that watches what you write and, when prompted either with a gesture or some on-screen content, can write back to the screen. This is an exploration of various interacts through this handwriting+screen medium.
+> An experiment for the reMarkable that watches what you write and, when prompted either with a gesture or some on-screen content, can write back to the screen. This is an exploration of various interactions through this handwriting+screen medium.
 
 <img src="docs/simple-chihuahua.jpg" width="300"><img src="docs/chihuahua-logo.png" width="300">
 
@@ -35,7 +35,7 @@ scp ghostwriter root@192.168.1.117:
 Then you have to ssh over and run it. Here is how to install and run (run these on the remarkable):
 
 ```sh
-# One itme -- make it executable after the initial copy
+# One time -- make it executable after the initial copy
 chmod +x ./ghostwriter
 
 ./ghostwriter --help # Get the options and see that it runs at all
@@ -45,7 +45,7 @@ chmod +x ./ghostwriter
 
 First you need to start `ghostwriter` on the reMarkable. SSH into your remarkable and run:
 ```
-# Use the defaults, including claude-3-7-sonnet
+# Use the defaults, including claude-sonnet-4-0
 ./ghostwriter
 
 # Use ChatGPT with the gpt-4o-mini model
@@ -53,6 +53,36 @@ First you need to start `ghostwriter` on the reMarkable. SSH into your remarkabl
 ```
 
 Draw some stuff on your screen, and then trigger the assistant by *touching/tapping the upper-right corner with your finger*. In the ssh session you'll see other touch-detections and there is a log of what happens while it is processing. You should see some dots drawn during processing and then a typewritten or drawn response!
+
+### CLI Options
+
+**Models & Engines:**
+* `--model MODEL` - Model to use (default: claude-sonnet-4-0)
+* `--engine ENGINE` - Engine: openai, anthropic, google (auto-detected from model)
+* `--engine-api-key KEY` - API key (or use env vars)
+* `--engine-base-url URL` - Custom API base URL
+
+**Behavior:**
+* `--prompt PROMPT` - Prompt file to use (default: general.json)
+* `--trigger-corner CORNER` - Touch trigger corner: UR, UL, LR, LL (default: UR)
+
+**Tools:**
+* `--no-svg` - Disable SVG drawing tool
+* `--no-keyboard` - Disable text output
+* `--thinking` - Enable model thinking (Anthropic)
+* `--web-search` - Enable web search (Anthropic)
+
+**Testing/Debug/Experiments:**
+* `--log-level LEVEL` - Set log level (info, debug, trace)
+* `--no-loop` - Run once and exit
+* `--input-png FILE` - Use PNG file instead of screenshot
+* `--output-file FILE` - Save output to file
+* `--save-screenshot FILE` - Save screenshot
+* `--save-bitmap FILE` - Save rendered output
+* `--no-submit` - Don't submit to model
+* `--no-draw` - Don't draw output
+* `--no-trigger` - Disable touch trigger
+* `--apply-segmentation` - Add image segmentation for spatial awareness
 
 ### Run in the background
 
@@ -64,7 +94,40 @@ nohup ./ghostwriter --model gpt-4o-mini &
 try something new
 (TODO: figure out how to run it on boot!)
 
+## Development
+
+I've been developing in Ubuntu, but did get it working in OSX. Generally it goes (1) install dependencies, (2) build locally but cross-compile for the reMarkable, (3) scp it over and try it out.
+
+* [Install docker](https://docs.docker.com/engine/install/) for cross-compiling
+* Install Rust
+  * You can also follow [instructions for rustup](https://www.rust-lang.org/tools/install)
+  * Or if you want to be fancy, I prefer getting it from [asdf](https://asdf-vm.com/)
+  * Or maybe apt or brew will work?
+* Ubuntu
+  * `sudo apt-get install gcc-arm-linux-gnueabihf`
+* OSX
+  * `brew install arm-linux-gnueabihf-binutils`
+* Set up [cross-rs](https://github.com/cross-rs/cross) and targets
+  * Get it from the current git version, especially for OSX
+  * `cargo install cross --git https://github.com/cross-rs/cross`
+  * `rustup target add armv7-unknown-linux-gnueabihf aarch64-unknown-linux-gnu`
+* Then to build and scp it to your remarkable
+  * rm2
+    * `cross build --release --target=armv7-unknown-linux-gnueabihf`
+    * `scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter root@remarkable:`
+  * rmpp
+    * `cross build --release --target=aarch64-unknown-linux-gnu`
+    * `scp target/aarch64-unknown-linux-gnu/release/ghostwriter root@remarkable:`
+* I wrapped up that last bit into `build.sh`
+  * So I do either `./build.sh` to build and send to my rm2
+  * Or I do `./build.sh rmpp` to build and send to my rmpp
+
+Meanwhile I have another terminal where I have ssh'd to the remarkable. I ctrl-C the current running ghostwriter there, then on my host laptop I run my build script, and then back on the remarkable shell I run ghostwriter again.
+
+When I want to do a build for others, I tag main with like `v2026.09.21-01` and that kicks off a github action that creates the latest release.
+
 ## Status / Journal
+
 * **2024-10-06** - Bootstrapping
   * Basic proof of concept works!!!
   * Drawing back on the screen doesn't work super well; it takes the SVG output from ChatGPT and rasterizes it and then tries to draw lots of individual dots on the screen. The Remarkable flips out a bit ... and when the whole screen is a giant black square it really freaks out and doesn't complete
@@ -103,7 +166,7 @@ try something new
   * Then I use that to record a sample input and output on the device
   * Then I added support to run ghostwriter on my laptop using the pre-captured input (build with `./build.sh local`)
   * Next I will build some tooling around iterating on examples given different prompts or pre-processing
-  * And then if I can get enough examples maye I'll have to make an AI judge to scale :)
+  * And then if I can get enough examples maybe I'll have to make an AI judge to scale :)
   * To help with that ... on idea is to make overlay the original input with the output but make the output a different color to make it differentiable by the judge
   * So far this technique is looking good for SVG output, but it'd be nice to somehow render keyboard output locally too. That is tricker since the keyboard input rendering is done by the reMarkable app
 * **2024-12-02** - Initial segmenter
@@ -179,6 +242,13 @@ try something new
   * Not turned on by default quite yet, but you can run `./ghostwriter --thinking --web-search` to get it all
 * **2025-05-17** -- Fix rm2
   * Thanks to [YOUSY0US3F](https://github.com/YOUSY0US3F) for fixing the rm2 screen capture!
+* **2025-09-21** -- Fix rmpp, code format, add some things
+  * Updating after a while, I was getting some weird responses. Debugging the internal dialog showed that it wasn't getting a good screenshot
+  * Turns out that in 3.20 the screen resolution changed?! The [PR over on goRemarkableStream](https://github.com/owulveryck/goMarkableStream/issues/134) describes it and it was an easy fix
+  * Also at a user requested I added `--no-svg` to fully disable svg tool, though you can also do that in a custom prompt
+  * Thinking about custom prompts and how annoying it is to set up, I'm now contemplating a web-interface that would let you enter API keys, manage prompts, and maybe do some debugging
+  * Last time I worked on this was before I started using claude-code. I'm having it do some work for me now
+  * Added `--trigger-corner LR` (and similar) to set the corner for activation
 
 ## Ideas
 * [DONE] Matt showed me his iOS super calc that just came out, take inspiration from that!
@@ -235,6 +305,7 @@ try something new
 * See if we can incorporate MCP (Model Context Protocol)
   * Maybe a proxy to a cloud hosted thing?
 * Allow non-tool-use responses to either be ignored or for regular text to be turned into keyboard (draw_text) tool
+* Integrated web interface to set up and manage configuration, maybe do some debugging
 
 ## References
 * Generally pulled resources from [Awesome reMarkable](https://github.com/reHackable/awesome-reMarkable)
@@ -245,21 +316,6 @@ try something new
 * Not quite the same, but I recently found [reMarkableAI](https://github.com/nickian/reMarkableAI) that does OCR→OpenAI→PDF→Device
 * Another reMarkable-LLM interface is [rMAI](https://github.com/StarNumber12046/rMAI). This one is a separate app (not trying to integrate in with simulated pen/keyboard input) and uses [replicate](https://replicate.com) as the model API service
 * I haven't adopted anything from it yet, but [Crazy Cow](https://github.com/machinelevel/sp425-crazy-cow) is a cool/crazy tool that turns text into pen strokes for the reMarkable1
-
-## Development
-
-```sh
-# Initial dependencies install (also ... rust, which I get via asdf)
-rustup target add armv7-unknown-linux-gnueabihf
-sudo apt-get install gcc-arm-linux-gnueabihf
-cargo install cross
-
-# Then to build
-cross build --release --target=armv7-unknown-linux-gnueabihf
-
-# And deploy by scp'ing the binary over and run it on the device!
-scp target/armv7-unknown-linux-gnueabihf/release/ghostwriter remarkable:
-```
 
 ## Scratch Notes
 
@@ -282,11 +338,15 @@ mv tmp/* evaluations/$evaluation_name
 convert \( evaluations/$evaluation_name/input.png -colorspace RGB \) \( tmp/result.png -type truecolormatte -transparent white -fill red -colorize 100 \) -compose Over -composite tmp/merged-output.png
 ```
 
-### Building uinput
+### Building uinput for virtual keyboard input
 
-* clone repo
+To type back to the user, we plug in a virtual USB keybaord (which is treated like the keyboard on the Remarkable Folio). The rm2 works out of the box, but the rmpp does not have uinput built into the kernel and does not ship with it as a module, so we have to compile it ourselves.
+
+You don't have to do this if I have done it already!
+
+* `git clone https://github.com/reMarkable/linux-imx-rm`
 * switch to target release branch
-* extract
+* extract following directions and large git support
 * edit arch/arm64/configs/ferrari_defconfig
 * Add `CONFIG_INPUT_UINPUT=m`
 * Follow the readme to build:
@@ -298,8 +358,9 @@ make -j$(nproc)
 make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./output modules_install
 ```
 
-* copy output/lib/modules/.../kernel/drivers/input/misc/uinput.ko for loading
-
+* copy output/lib/modules/.../kernel/drivers/input/misc/uinput.ko over to utils/rmpp/uinput-VERSION.ko
+* This will be bundled and automatically loaded
+* ... so in theory as long as I do it and commit it here to this repo you won't have to
 
 ### Prompt / Tool ideas:
 * There are a few models for tools -- each tool can be re-usable and generalized or each tool could include things like extra-inputs for chain-of thought and hints for what goes into each parameter
@@ -313,7 +374,7 @@ make INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=./output modules_install
 * One intermediate state could be `thinking` where it can use the input of the tool as a place to write out thoughts, and the output of the tool is ignored
 * But overall what we're leading to here is a system where the prompts are easy to write, easy to copy/paste, easy to maintain
 * And then maybe we can have a set of evals or examples that are easy to use on top of a prompt mode
-* Increasingly, the reMarkable2 case might HAPPEN to be a specific prompt we set up in this system...
+* Increasingly, the reMarkable case might HAPPEN to be a specific prompt we set up in this system, and the rest could be extracted as a framework...
 * So the state machine could be:
 
 ```mermaid

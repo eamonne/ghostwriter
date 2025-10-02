@@ -8,6 +8,29 @@ use std::time::Duration;
 
 use crate::device::DeviceModel;
 
+#[derive(Debug, Clone)]
+pub enum TriggerCorner {
+    UpperRight,
+    UpperLeft,
+    LowerRight,
+    LowerLeft,
+}
+
+impl TriggerCorner {
+    pub fn from_string(s: &str) -> Result<Self> {
+        match s.to_lowercase().as_str() {
+            "ur" | "upper-right" => Ok(TriggerCorner::UpperRight),
+            "ul" | "upper-left" => Ok(TriggerCorner::UpperLeft),
+            "lr" | "lower-right" => Ok(TriggerCorner::LowerRight),
+            "ll" | "lower-left" => Ok(TriggerCorner::LowerLeft),
+            _ => Err(anyhow::anyhow!(
+                "Invalid trigger corner: {}. Use UR, UL, LR, LL, upper-right, upper-left, lower-right, or lower-left",
+                s
+            )),
+        }
+    }
+}
+
 // Output dimensions remain the same for both devices
 const VIRTUAL_WIDTH: u16 = 768;
 const VIRTUAL_HEIGHT: u16 = 1024;
@@ -26,10 +49,11 @@ const ABS_MT_PRESSURE: u16 = 58;
 pub struct Touch {
     device: Option<Device>,
     device_model: DeviceModel,
+    trigger_corner: TriggerCorner,
 }
 
 impl Touch {
-    pub fn new(no_touch: bool) -> Self {
+    pub fn new(no_touch: bool, trigger_corner: TriggerCorner) -> Self {
         let device_model = DeviceModel::detect();
         info!("Touch using device model: {}", device_model.name());
 
@@ -39,15 +63,12 @@ impl Touch {
             DeviceModel::Unknown => "/dev/input/event2", // Default to RM2
         };
 
-        let device = if no_touch {
-            None
-        } else {
-            Some(Device::open(device_path).unwrap())
-        };
+        let device = if no_touch { None } else { Some(Device::open(device_path).unwrap()) };
 
         Self {
             device,
             device_model,
+            trigger_corner,
         }
     }
 
@@ -71,17 +92,12 @@ impl Touch {
                 if event.code() == ABS_MT_POSITION_Y {
                     position_y = event.value();
                 }
-                if event.code() == ABS_MT_TRACKING_ID {
-                    if event.value() == -1 {
-                        let (x, y) = self.input_to_virtual((position_x, position_y));
-                        debug!(
-                            "Touch release detected at ({}, {}) normalized ({}, {})",
-                            position_x, position_y, x, y
-                        );
-                        if x > 700 && y < 50 {
-                            debug!("Touch release in target zone!");
-                            return Ok(());
-                        }
+                if event.code() == ABS_MT_TRACKING_ID && event.value() == -1 {
+                    let (x, y) = self.input_to_virtual((position_x, position_y));
+                    debug!("Touch release detected at ({}, {}) normalized ({}, {})", position_x, position_y, x, y);
+                    if self.is_in_trigger_zone(x, y) {
+                        debug!("Touch release in target zone!");
+                        return Ok(());
                     }
                 }
             }
@@ -143,6 +159,17 @@ impl Touch {
         // sleep(Duration::from_millis(10));
         // sleep(Duration::from_millis(100));
         Ok(())
+    }
+
+    fn is_in_trigger_zone(&self, x: i32, y: i32) -> bool {
+        const CORNER_SIZE: i32 = 68; // Size of the trigger zone (68x68 pixels)
+
+        match self.trigger_corner {
+            TriggerCorner::UpperRight => x > VIRTUAL_WIDTH as i32 - CORNER_SIZE && y < CORNER_SIZE,
+            TriggerCorner::UpperLeft => x < CORNER_SIZE && y < CORNER_SIZE,
+            TriggerCorner::LowerRight => x > VIRTUAL_WIDTH as i32 - CORNER_SIZE && y > VIRTUAL_HEIGHT as i32 - CORNER_SIZE,
+            TriggerCorner::LowerLeft => x < CORNER_SIZE && y > VIRTUAL_HEIGHT as i32 - CORNER_SIZE,
+        }
     }
 
     fn screen_width(&self) -> u32 {

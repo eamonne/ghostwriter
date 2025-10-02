@@ -1,3 +1,4 @@
+pub mod config;
 pub mod device;
 pub mod embedded_assets;
 pub mod keyboard;

@@ -38,20 +38,12 @@ impl Anthropic {
 
 impl LLMEngine for Anthropic {
     fn new(options: &OptionMap) -> Self {
-        let api_key = option_or_env(&options, "api_key", "ANTHROPIC_API_KEY");
-        let base_url = option_or_env_fallback(
-            &options,
-            "base_url",
-            "ANTHROPIC_BASE_URL",
-            "https://api.anthropic.com",
-        );
+        let api_key = option_or_env(options, "api_key", "ANTHROPIC_API_KEY");
+        let base_url = option_or_env_fallback(options, "base_url", "ANTHROPIC_BASE_URL", "https://api.anthropic.com");
         let model = options.get("model").unwrap().to_string();
-        let web_search = options.get("web_search").map_or(false, |v| v == "true");
-        let thinking = options.get("thinking").map_or(false, |v| v == "true");
-        let thinking_tokens = options
-            .get("thinking_tokens")
-            .and_then(|v| v.parse::<u32>().ok())
-            .unwrap_or(5000);
+        let web_search = options.get("web_search").is_some_and(|v| v == "true");
+        let thinking = options.get("thinking").is_some_and(|v| v == "true");
+        let thinking_tokens = options.get("thinking_tokens").and_then(|v| v.parse::<u32>().ok()).unwrap_or(5000);
 
         Self {
             model,
@@ -96,11 +88,7 @@ impl LLMEngine for Anthropic {
     }
 
     fn execute(&mut self) -> Result<()> {
-        let mut tool_definitions = self
-            .tools
-            .iter()
-            .map(|tool| Self::anthropic_tool_definition(tool))
-            .collect::<Vec<_>>();
+        let mut tool_definitions = self.tools.iter().map(Self::anthropic_tool_definition).collect::<Vec<_>>();
 
         // Add web search tool if enabled
         if self.web_search {
@@ -163,26 +151,17 @@ impl LLMEngine for Anthropic {
                 "tool_use" => {
                     let function_name = content_item["name"].as_str().unwrap();
                     let function_input = &content_item["input"];
-                    let tool = self
-                        .tools
-                        .iter_mut()
-                        .find(|tool| tool.name == function_name);
+                    let tool = self.tools.iter_mut().find(|tool| tool.name == function_name);
 
                     if let Some(tool) = tool {
                         if let Some(callback) = &mut tool.callback {
                             callback(function_input.clone());
                             return Ok(());
                         } else {
-                            return Err(anyhow::anyhow!(
-                                "No callback registered for tool {}",
-                                function_name
-                            ));
+                            return Err(anyhow::anyhow!("No callback registered for tool {}", function_name));
                         }
                     } else {
-                        return Err(anyhow::anyhow!(
-                            "No tool registered with name {}",
-                            function_name
-                        ));
+                        return Err(anyhow::anyhow!("No tool registered with name {}", function_name));
                     }
                 }
                 "thinking" => {
