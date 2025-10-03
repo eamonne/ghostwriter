@@ -5,7 +5,7 @@
 This implementation replaces the limited virtual keyboard approach with SVG-based text rendering, enabling support for **any Unicode characters** including Hebrew, Arabic, Chinese, Japanese, emoji, and all other language scripts.
 
 ## What Changed
-
+##
 ### Previous Limitation
 The original `keyboard.rs` module used a virtual keyboard that could only simulate keypresses for ASCII characters. This meant:
 - ❌ No support for accented characters (é, ñ, ü, etc.)
