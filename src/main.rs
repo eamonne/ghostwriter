@@ -18,6 +18,7 @@ use ghostwriter::{
     pen::Pen,
     screenshot::Screenshot,
     segmenter::analyze_image,
+    text_renderer::text_to_cursive_svg,
     touch::{Touch, TriggerCorner},
     util::{setup_uinput, svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
@@ -160,13 +161,21 @@ macro_rules! lock {
     };
 }
 
-fn draw_text(text: &str, keyboard: &mut Keyboard) -> Result<()> {
-    info!("Drawing text to the screen.");
-    // keyboard.progress(".")?;
+fn draw_text(text: &str, keyboard: &mut Keyboard, pen: &mut Pen, save_bitmap: Option<&String>, no_draw: bool) -> Result<()> {
+    info!("Drawing text to the screen using SVG rendering (supports all Unicode characters).");
     keyboard.progress_end()?;
-    keyboard.key_cmd_body()?;
-    keyboard.string_to_keypresses(text)?;
-    // keyboard.string_to_keypresses("\n\n")?;
+    
+    // Convert text to SVG with cursive/handwriting style
+    let svg_data = text_to_cursive_svg(text, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
+    
+    // Render the SVG as a bitmap and draw it
+    let bitmap = svg_to_bitmap(&svg_data, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
+    if let Some(save_bitmap) = save_bitmap {
+        write_bitmap_to_file(&bitmap, save_bitmap)?;
+    }
+    if !no_draw {
+        pen.draw_bitmap(&bitmap)?;
+    }
     Ok(())
 }
 
@@ -269,8 +278,10 @@ fn ghostwriter(args: &Args) -> Result<()> {
     let mut engine = create_engine(&engine_name, &engine_options)?;
 
     let output_file = config.output_file.clone();
+    let save_bitmap = config.save_bitmap.clone();
     let no_draw = config.no_draw;
     let keyboard_clone = Arc::clone(&keyboard);
+    let pen_clone = Arc::clone(&pen);
 
     let tool_config_draw_text = load_config("tool_draw_text.json");
 
@@ -290,22 +301,21 @@ fn ghostwriter(args: &Args) -> Result<()> {
                     log::error!("Failed to write output file: {}", e);
                 }
             }
-            if !no_draw {
-                // let mut keyboard = lock!(keyboard_clone);
-                if let Err(e) = draw_text(text, &mut lock!(keyboard_clone)) {
-                    log::error!("Failed to draw text: {}", e);
-                }
+            let mut keyboard = lock!(keyboard_clone);
+            let mut pen = lock!(pen_clone);
+            if let Err(e) = draw_text(text, &mut keyboard, &mut pen, save_bitmap.as_ref(), no_draw) {
+                log::error!("Failed to draw text: {}", e);
             }
         }),
     );
 
-    let output_file = config.output_file.clone();
-    let save_bitmap = config.save_bitmap.clone();
-    let no_draw = config.no_draw;
-    let keyboard_clone = Arc::clone(&keyboard);
-    let pen_clone = Arc::clone(&pen);
-
     if !config.no_svg {
+        let output_file = config.output_file.clone();
+        let save_bitmap = config.save_bitmap.clone();
+        let no_draw = config.no_draw;
+        let keyboard_clone = Arc::clone(&keyboard);
+        let pen_clone = Arc::clone(&pen);
+
         let tool_config_draw_svg = load_config("tool_draw_svg.json");
         engine.register_tool(
             "draw_svg",

@@ -12,8 +12,8 @@ jobs:
         include:
           - target: armv7-unknown-linux-gnueabihf
             name: ghostwriter-rm2
-          - target: aarch64-unknown-linux-gnu
-            name: ghostwriter-rmpp
+          # - target: aarch64-unknown-linux-gnu
+          #   name: ghostwriter-rmpp
     name: Remarkable Build
     needs: create_release
     runs-on: ubuntu-latest

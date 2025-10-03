@@ -6,5 +6,6 @@ pub mod llm_engine;
 pub mod pen;
 pub mod screenshot;
 pub mod segmenter;
+pub mod text_renderer;
 pub mod touch;
 pub mod util;
