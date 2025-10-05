@@ -18,7 +18,7 @@ use ghostwriter::{
     pen::Pen,
     screenshot::Screenshot,
     segmenter::analyze_image,
-    text_renderer::text_to_cursive_svg,
+    text_renderer::{text_to_strokes, Stroke},
     touch::{Touch, TriggerCorner},
     util::{setup_uinput, svg_to_bitmap, write_bitmap_to_file, OptionMap},
 };
@@ -161,21 +161,31 @@ macro_rules! lock {
     };
 }
 
-fn draw_text(text: &str, keyboard: &mut Keyboard, pen: &mut Pen, save_bitmap: Option<&String>, no_draw: bool) -> Result<()> {
-    info!("Drawing text to the screen using SVG rendering (supports all Unicode characters).");
+fn draw_text(text: &str, keyboard: &mut Keyboard, pen: &mut Pen, _save_bitmap: Option<&String>, no_draw: bool) -> Result<()> {
+    info!("Drawing text to the screen using stroke-based rendering (fast & supports all Unicode).");
     keyboard.progress_end()?;
     
-    // Convert text to SVG with cursive/handwriting style
-    let svg_data = text_to_cursive_svg(text, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
-    
-    // Render the SVG as a bitmap and draw it
-    let bitmap = svg_to_bitmap(&svg_data, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
-    if let Some(save_bitmap) = save_bitmap {
-        write_bitmap_to_file(&bitmap, save_bitmap)?;
-    }
     if !no_draw {
-        pen.draw_bitmap(&bitmap)?;
+        // Convert text to vector strokes
+        let strokes = text_to_strokes(text, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)?;
+        
+        info!("Drawing {} strokes to screen", strokes.len());
+        
+        // Draw each stroke as a continuous line
+        for stroke in strokes {
+            if stroke.points.len() < 2 {
+                continue; // Skip strokes with too few points
+            }
+            
+            // Draw the stroke as connected line segments
+            for window in stroke.points.windows(2) {
+                let p1 = (window[0].0 as i32, window[0].1 as i32);
+                let p2 = (window[1].0 as i32, window[1].1 as i32);
+                pen.draw_line_screen(p1, p2)?;
+            }
+        }
     }
+    
     Ok(())
 }
 
